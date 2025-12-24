@@ -22,75 +22,68 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $slug = 'users';
+    protected static ?string $slug = "users";
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $navigationGroup = "User Management";
+
+    protected static ?int $navigationSort = 1;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlineUser;
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                TextInput::make('Email')
-                    ->required(),
+        return $schema->components([
+            TextInput::make("Email")->required(),
 
+            TextInput::make("PhoneNumber"),
 
-                TextInput::make('PhoneNumber'),
+            TextInput::make("FirstName"),
 
-                TextInput::make('FirstName'),
+            TextInput::make("LastName"),
 
-                TextInput::make('LastName'),
-
-                Checkbox::make('IsAdmin'),
-
-            ]);
+            Checkbox::make("IsAdmin"),
+        ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('Email'),
+                TextColumn::make("Email"),
 
-                TextColumn::make('PhoneNumber'),
+                TextColumn::make("PhoneNumber"),
 
-                TextColumn::make('FirstName'),
+                TextColumn::make("FirstName"),
 
-                TextColumn::make('LastName'),
+                TextColumn::make("LastName"),
 
-                TextColumn::make('IsAdmin'),
+                TextColumn::make("IsAdmin"),
             ])
             ->filters([
                 //
             ])
-            ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
+            ->recordActions([EditAction::make(), DeleteAction::make()])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                BulkActionGroup::make([DeleteBulkAction::make()]),
             ]);
     }
 
     public static function getRelations(): array
     {
-        return [
-            ClinicsRelationManager::class,
-        ];
+        return [ClinicsRelationManager::class];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            "index" => Pages\\ListUsers::route("/"),
+            "create" => Pages\\CreateUser::route("/create"),
+            "edit" => Pages\\EditUser::route("/{record}/edit"),
         ];
     }
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['name'];
+        return ["name"];
     }
 }

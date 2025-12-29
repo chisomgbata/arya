@@ -23,6 +23,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class TimeOfAdministrationResource extends Resource
 {
@@ -30,11 +31,11 @@ class TimeOfAdministrationResource extends Resource
 
     protected static ?string $slug = "time-of-administrations";
 
-    protected static ?string $navigationGroup = "Medicine Management";
+    protected static string|null|UnitEnum $navigationGroup = "Medicine Management";
 
     protected static ?int $navigationSort = 4;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlineClock;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;
 
     public static function form(Schema $schema): Schema
     {
@@ -73,9 +74,9 @@ class TimeOfAdministrationResource extends Resource
     public static function getPages(): array
     {
         return [
-            "index" => Pages\\ListTimeOfAdministrations::route("/"),
-            "create" => Pages\\CreateTimeOfAdministration::route("/create"),
-            "edit" => Pages\\EditTimeOfAdministration::route("/{record}/edit"),
+            "index" => Pages\ListTimeOfAdministrations::route("/"),
+            "create" => Pages\CreateTimeOfAdministration::route("/create"),
+            "edit" => Pages\EditTimeOfAdministration::route("/{record}/edit"),
         ];
     }
 

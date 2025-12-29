@@ -13,6 +13,7 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -26,6 +27,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class MedicineResource extends Resource
 {
@@ -33,11 +35,14 @@ class MedicineResource extends Resource
 
     protected static ?string $slug = "medicines";
 
-    protected static ?string $navigationGroup = "Medicine Management";
+    protected static string|null|UnitEnum $navigationGroup = "Medicine Management";
 
     protected static ?int $navigationSort = 2;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlineQueueList;
+    protected static bool $isScopedToTenant = false;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedQueueList;
+
 
     public static function form(Schema $schema): Schema
     {
@@ -60,6 +65,12 @@ class MedicineResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function (Builder $query): Builder {
+                if (!Filament::getTenant()) {
+                    return $query;
+                }
+                return $query->where("ClinicId", Filament::getTenant()->Id);
+            })
             ->columns([
                 TextColumn::make("Name"),
 
@@ -88,9 +99,9 @@ class MedicineResource extends Resource
     public static function getPages(): array
     {
         return [
-            "index" => Pages\\ListMedicines::route("/"),
-            "create" => Pages\\CreateMedicine::route("/create"),
-            "edit" => Pages\\EditMedicine::route("/{record}/edit"),
+            "index" => Pages\ListMedicines::route("/"),
+            "create" => Pages\CreateMedicine::route("/create"),
+            "edit" => Pages\EditMedicine::route("/{record}/edit"),
         ];
     }
 

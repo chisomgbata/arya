@@ -27,6 +27,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class DiseaseTypeResource extends Resource
 {
@@ -34,11 +35,13 @@ class DiseaseTypeResource extends Resource
 
     protected static ?string $slug = "disease-types";
 
-    protected static ?string $navigationGroup = "Disease Management";
+    protected static string|null|UnitEnum $navigationGroup = "Disease Management";
 
     protected static ?int $navigationSort = 3;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlineTag;
+    protected static ?string $recordTitleAttribute = "Name";
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
 
     public static function form(Schema $schema): Schema
     {
@@ -95,9 +98,9 @@ class DiseaseTypeResource extends Resource
     public static function getPages(): array
     {
         return [
-            "index" => Pages\\ListDiseaseTypes::route("/"),
-            "create" => Pages\\CreateDiseaseType::route("/create"),
-            "edit" => Pages\\EditDiseaseType::route("/{record}/edit"),
+            "index" => Pages\ListDiseaseTypes::route("/"),
+            "create" => Pages\CreateDiseaseType::route("/create"),
+            "edit" => Pages\EditDiseaseType::route("/{record}/edit"),
         ];
     }
 

@@ -23,6 +23,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class LaboratoryReportResource extends Resource
 {
@@ -30,11 +31,13 @@ class LaboratoryReportResource extends Resource
 
     protected static ?string $slug = "laboratory-reports";
 
-    protected static ?string $navigationGroup = "Disease Management";
+    protected static string|null|UnitEnum $navigationGroup = "Disease Management";
 
     protected static ?int $navigationSort = 4;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlineDocumentReport;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowTrendingUp;
+
+    protected static ?string $recordTitleAttribute = 'Name';
 
     public static function form(Schema $schema): Schema
     {
@@ -67,9 +70,9 @@ class LaboratoryReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            "index" => Pages\\ListLaboratoryReports::route("/"),
-            "create" => Pages\\CreateLaboratoryReport::route("/create"),
-            "edit" => Pages\\EditLaboratoryReport::route("/{record}/edit"),
+            "index" => Pages\ListLaboratoryReports::route("/"),
+            "create" => Pages\CreateLaboratoryReport::route("/create"),
+            "edit" => Pages\EditLaboratoryReport::route("/{record}/edit"),
         ];
     }
 

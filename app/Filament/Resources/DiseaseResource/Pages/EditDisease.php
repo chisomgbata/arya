@@ -12,6 +12,17 @@ class EditDisease extends EditRecord
 {
     protected static string $resource = DiseaseResource::class;
 
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
+
+    public function getContentTabLabel(): ?string
+    {
+        return "Disease Info";
+
+    }
+
     protected function getHeaderActions(): array
     {
         return [

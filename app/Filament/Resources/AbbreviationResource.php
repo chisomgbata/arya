@@ -23,6 +23,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class AbbreviationResource extends Resource
 {
@@ -30,11 +31,11 @@ class AbbreviationResource extends Resource
 
     protected static ?string $slug = "abbreviations";
 
-    protected static ?string $navigationGroup = "Content Management";
+    protected static string|null|UnitEnum $navigationGroup = "Content Management";
 
     protected static ?int $navigationSort = 1;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlineDocumentText;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
     public static function form(Schema $schema): Schema
     {

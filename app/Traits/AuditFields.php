@@ -10,41 +10,10 @@ trait AuditFields
     use  SoftDeletes;
 
     /**
-     * Initialize the trait.
-     * This runs when the model is instantiated, setting up keys and config.
-     */
-    public function initializeAuditFields(): void
-    {
-        $this->primaryKey = 'Id';
-
-        $this->timestamps = true;
-    }
-
-    /**
-     * Override Timestamp Column Names.
-     * We use methods instead of constants because constants in Traits
-     * cannot override Model constants in PHP.
-     */
-    public function getCreatedAtColumn(): string
-    {
-        return 'CreatedDate';
-    }
-
-    public function getUpdatedAtColumn(): string
-    {
-        return 'ModifiedDate';
-    }
-
-    public function getDeletedAtColumn(): string
-    {
-        return 'DeletedDate';
-    }
-
-    /**
      * Boot the trait.
      * This registers the Model Events automatically.
      */
-    public static function bootAuditFields()
+    public static function bootAuditFields(): void
     {
         static::creating(function ($model) {
             $userId = Auth::id();
@@ -81,5 +50,36 @@ trait AuditFields
             $model->DeletedBy = null;
             $model->saveQuietly();
         });
+    }
+
+    /**
+     * Initialize the trait.
+     * This runs when the model is instantiated, setting up keys and config.
+     */
+    public function initializeAuditFields(): void
+    {
+        $this->primaryKey = 'Id';
+
+        $this->timestamps = true;
+    }
+
+    /**
+     * Override Timestamp Column Names.
+     * We use methods instead of constants because constants in Traits
+     * cannot override Model constants in PHP.
+     */
+    public function getCreatedAtColumn(): string
+    {
+        return 'CreatedDate';
+    }
+
+    public function getUpdatedAtColumn(): string
+    {
+        return 'ModifiedDate';
+    }
+
+    public function getDeletedAtColumn(): string
+    {
+        return 'DeletedDate';
     }
 }

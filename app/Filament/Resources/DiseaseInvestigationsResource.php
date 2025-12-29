@@ -13,8 +13,6 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
-use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -26,6 +24,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class DiseaseInvestigationsResource extends Resource
 {
@@ -33,11 +32,13 @@ class DiseaseInvestigationsResource extends Resource
 
     protected static ?string $slug = "disease-investigations";
 
-    protected static ?string $navigationGroup = "Disease Management";
+    protected static string|null|UnitEnum $navigationGroup = "Disease Management";
 
     protected static ?int $navigationSort = 2;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlineMicroscope;
+    protected static ?string $recordTitleAttribute = "Name";
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMagnifyingGlass;
 
     public static function form(Schema $schema): Schema
     {
@@ -78,9 +79,9 @@ class DiseaseInvestigationsResource extends Resource
     public static function getPages(): array
     {
         return [
-            "index" => Pages\\ListDiseaseInvestigations::route("/"),
-            "create" => Pages\\CreateDiseaseInvestigations::route("/create"),
-            "edit" => Pages\\EditDiseaseInvestigations::route("/{record}/edit"),
+            "index" => Pages\ListDiseaseInvestigations::route("/"),
+            "create" => Pages\CreateDiseaseInvestigations::route("/create"),
+            "edit" => Pages\EditDiseaseInvestigations::route("/{record}/edit"),
         ];
     }
 

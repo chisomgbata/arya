@@ -7,14 +7,15 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('DiseaseSymptoms', function (Blueprint $table) {
+        Schema::table('AspNetUsers', function (Blueprint $table) {
+            $table->rememberToken();
         });
     }
 
     public function down(): void
     {
-        Schema::table('', function (Blueprint $table) {
-            //
+        Schema::table('AspNetUsers', function (Blueprint $table) {
+            $table->dropRememberToken();
         });
     }
 };

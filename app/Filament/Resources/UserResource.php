@@ -6,17 +6,18 @@ use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers\ClinicsRelationManager;
 use App\Models\User;
 use BackedEnum;
+use Filament\Actions\AttachAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class UserResource extends Resource
 {
@@ -24,11 +25,12 @@ class UserResource extends Resource
 
     protected static ?string $slug = "users";
 
-    protected static ?string $navigationGroup = "User Management";
+    protected static string|null|UnitEnum $navigationGroup = "User Management";
 
     protected static ?int $navigationSort = 1;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlineUser;
+    protected static bool $isScopedToTenant = false;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUser;
 
     public static function form(Schema $schema): Schema
     {
@@ -40,8 +42,6 @@ class UserResource extends Resource
             TextInput::make("FirstName"),
 
             TextInput::make("LastName"),
-
-            Checkbox::make("IsAdmin"),
         ]);
     }
 
@@ -62,7 +62,7 @@ class UserResource extends Resource
             ->filters([
                 //
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->recordActions([EditAction::make(), DeleteAction::make(), AttachAction::make()])
             ->toolbarActions([
                 BulkActionGroup::make([DeleteBulkAction::make()]),
             ]);
@@ -76,9 +76,9 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            "index" => Pages\\ListUsers::route("/"),
-            "create" => Pages\\CreateUser::route("/create"),
-            "edit" => Pages\\EditUser::route("/{record}/edit"),
+            "index" => Pages\ListUsers::route("/"),
+            "create" => Pages\CreateUser::route("/create"),
+            "edit" => Pages\EditUser::route("/{record}/edit"),
         ];
     }
 

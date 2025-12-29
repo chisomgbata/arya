@@ -27,6 +27,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class DiseaseResource extends Resource
 {
@@ -34,11 +35,11 @@ class DiseaseResource extends Resource
 
     protected static ?string $slug = "diseases";
 
-    protected static ?string $navigationGroup = "Disease Management";
+    protected static string|null|UnitEnum $navigationGroup = "Disease Management";
 
     protected static ?int $navigationSort = 1;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlineVirus;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedEyeSlash;
 
     public static function getRecordTitle(?Model $record): string|Htmlable|null
     {
@@ -99,9 +100,9 @@ class DiseaseResource extends Resource
     public static function getPages(): array
     {
         return [
-            "index" => Pages\\ListDiseases::route("/"),
-            "create" => Pages\\CreateDisease::route("/create"),
-            "edit" => Pages\\EditDisease::route("/{record}/edit"),
+            "index" => Pages\ListDiseases::route("/"),
+            "create" => Pages\CreateDisease::route("/create"),
+            "edit" => Pages\EditDisease::route("/{record}/edit"),
         ];
     }
 

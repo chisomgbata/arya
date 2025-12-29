@@ -23,18 +23,21 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class GlossaryResource extends Resource
 {
     protected static ?string $model = Glossary::class;
 
+    protected static ?string $recordTitleAttribute = "Name";
+
     protected static ?string $slug = "glossaries";
 
-    protected static ?string $navigationGroup = "Content Management";
+    protected static string|null|UnitEnum $navigationGroup = "Content Management";
 
     protected static ?int $navigationSort = 2;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlineBookOpen;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
 
     public static function form(Schema $schema): Schema
     {
@@ -72,9 +75,9 @@ class GlossaryResource extends Resource
     public static function getPages(): array
     {
         return [
-            "index" => Pages\\ListGlossaries::route("/"),
-            "create" => Pages\\CreateGlossary::route("/create"),
-            "edit" => Pages\\EditGlossary::route("/{record}/edit"),
+            "index" => Pages\ListGlossaries::route("/"),
+            "create" => Pages\CreateGlossary::route("/create"),
+            "edit" => Pages\EditGlossary::route("/{record}/edit"),
         ];
     }
 

@@ -17,6 +17,11 @@ class Medicine extends Model
         return $this->belongsTo(MedicineForm::class, 'MedicineFormId');
     }
 
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class, 'ClinicId');
+    }
+
     protected function casts(): array
     {
         return [

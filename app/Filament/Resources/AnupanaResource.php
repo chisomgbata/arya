@@ -23,6 +23,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class AnupanaResource extends Resource
 {
@@ -30,11 +31,13 @@ class AnupanaResource extends Resource
 
     protected static ?string $slug = "anupanas";
 
-    protected static ?string $navigationGroup = "Medicine Management";
+    protected static string|null|UnitEnum $navigationGroup = "Medicine Management";
 
     protected static ?int $navigationSort = 3;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinePill;
+    protected static ?string $recordTitleAttribute = 'Name';
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedServerStack;
 
     public static function form(Schema $schema): Schema
     {
@@ -71,9 +74,9 @@ class AnupanaResource extends Resource
     public static function getPages(): array
     {
         return [
-            "index" => Pages\\ListAnupanas::route("/"),
-            "create" => Pages\\CreateAnupana::route("/create"),
-            "edit" => Pages\\EditAnupana::route("/{record}/edit"),
+            "index" => Pages\ListAnupanas::route("/"),
+            "create" => Pages\CreateAnupana::route("/create"),
+            "edit" => Pages\EditAnupana::route("/{record}/edit"),
         ];
     }
 

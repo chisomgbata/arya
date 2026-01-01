@@ -25,7 +25,7 @@ class PatientForm
                 TextInput::make('Email')->email(),
                 TextInput::make('OtherIdNumber'),
                 Radio::make('Gender')->options([
-                    'male', 'female', "others"
+                    'male' => 'Male', 'female' => 'Female', "others" => 'Others'
                 ])->columns(3),
                 TextArea::make('Address')->columnSpanFull(),
                 FileUpload::make('Image')

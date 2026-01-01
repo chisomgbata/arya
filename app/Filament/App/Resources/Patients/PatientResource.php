@@ -6,6 +6,7 @@ use App\Filament\App\Resources\Patients\Pages\CreatePatient;
 use App\Filament\App\Resources\Patients\Pages\EditPatient;
 use App\Filament\App\Resources\Patients\Pages\ListPatients;
 use App\Filament\App\Resources\Patients\RelationManagers\HistoryRelationManager;
+use App\Filament\App\Resources\Patients\RelationManagers\PrakrutiRelationManager;
 use App\Filament\App\Resources\Patients\Schemas\PatientForm;
 use App\Filament\App\Resources\Patients\Tables\PatientsTable;
 use App\Models\Patient;
@@ -38,7 +39,8 @@ class PatientResource extends Resource
     public static function getRelations(): array
     {
         return [
-            HistoryRelationManager::class
+            HistoryRelationManager::class,
+            PrakrutiRelationManager::class
         ];
     }
 

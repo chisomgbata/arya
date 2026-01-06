@@ -15,6 +15,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
+use Saade\FilamentAutograph\Forms\Components\SignaturePad;
 
 class PatientForm
 {
@@ -40,6 +41,11 @@ class PatientForm
                     ->disk('public')
                     ->visibility('public')
                 ,
+
+                Textarea::make('complain_of'),
+                SignaturePad::make('sketch')->columnSpanFull(),
+
+
                 Section::make('Prakruti Analysis')
                     ->columnSpanFull()
                     ->relationship('prakruti')

@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('Patients', function (Blueprint $table) {
-            $table->string('sketch')->nullable();
+            $table->text('sketch')->nullable();
             $table->string('complain_of')->nullable();
         });
     }

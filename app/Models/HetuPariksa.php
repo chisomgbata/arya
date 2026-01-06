@@ -2,14 +2,23 @@
 
 namespace App\Models;
 
+use App\Traits\AuditFields;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HetuPariksa extends Model
 {
+    use AuditFields, HasUuids;
+
     public $timestamps = false;
 
     protected $table = 'HetuPariksas';
+
+    protected $attributes = [
+        'DeletedBy' => '',
+        'IsDeleted' => false,
+    ];
 
     public function patientHistory(): BelongsTo
     {
@@ -129,6 +138,7 @@ class HetuPariksa extends Model
             'Question35_Pit' => 'boolean',
             'Question35_Kuf' => 'boolean',
             'IsDeleted' => 'boolean',
+            'Responses' => 'array',
         ];
     }
 }

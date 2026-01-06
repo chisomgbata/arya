@@ -4,4 +4,5 @@
 
 @source '../../../../app/Filament/App/**/*';
 @source '../../../../resources/views/filament/app/**/*';
+@source '../../../../resources/views/**/*';
 @source '../../../../vendor/guava/calendar/resources/**/*';

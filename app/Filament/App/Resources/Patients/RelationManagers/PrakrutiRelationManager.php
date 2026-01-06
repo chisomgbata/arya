@@ -49,9 +49,9 @@ class PrakrutiRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('Id')
             ->columns([
-                TextColumn::make('VatCount')->label('Vata')->numeric(),
-                TextColumn::make('PitCount')->label('Pitta')->numeric(),
-                TextColumn::make('KufCount')->label('Kapha')->numeric(),
+                TextColumn::make('VatCount')->label('Vata')->numeric()->default(0),
+                TextColumn::make('PitCount')->label('Pitta')->numeric()->default(0),
+                TextColumn::make('KufCount')->label('Kapha')->numeric()->default(0),
 
                 TextColumn::make('VatPercentage')->label('Vata %')->suffix('%'),
                 TextColumn::make('PitPercentage')->label('Pitta %')->suffix('%'),
@@ -119,20 +119,16 @@ class PrakrutiRelationManager extends RelationManager
         $pitPct = $total > 0 ? ($counts['Pitta'] / $total) * 100 : 0;
         $kufPct = $total > 0 ? ($counts['Kapha'] / $total) * 100 : 0;
 
-        // 6. Return ONLY the columns that exist in your `PatientPrakrutis` table.
-        // This effectively discards the "Eyes", "Nails", etc. keys so SQL doesn't crash.
         return [
             'VatCount' => $counts['Vata'],
             'PitCount' => $counts['Pitta'],
             'KufCount' => $counts['Kapha'],
-            'VatPercentage' => (int)round($vatPct), // Casting to int as per your DB schema
+            'VatPercentage' => (int)round($vatPct),
             'PitPercentage' => (int)round($pitPct),
             'KufPercentage' => (int)round($kufPct),
             'Total' => $total,
 
-            // Handle required defaults if your model events don't handle them:
             'IsDeleted' => 0,
-            // 'CreatedBy' and 'PatientId' are usually handled by Filament/Relationships automatically.
         ];
     }
 

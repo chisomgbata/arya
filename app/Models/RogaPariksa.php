@@ -3,13 +3,19 @@
 namespace App\Models;
 
 use App\Traits\AuditFields;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class RogaPariksa extends Model
 {
-    use AuditFields;
+    use AuditFields, HasUuids;
 
     protected $table = 'RogaPariksas';
+
+    protected $attributes = [
+        'DeletedBy' => '',
+        'IsDeleted' => false
+    ];
 
     protected function casts(): array
     {

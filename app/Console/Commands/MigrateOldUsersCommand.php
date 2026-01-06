@@ -2,10 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Clinic;
-use App\Models\Patient;
-use App\Models\User;
+use App\Models\RogaPariksa;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class MigrateOldUsersCommand extends Command
 {
@@ -15,12 +14,19 @@ class MigrateOldUsersCommand extends Command
 
     public function handle(): void
     {
-        $patients = Patient::query()->chunk(50, function ($patients) {
-            foreach ($patients as $patient) {
-                $patient->update([
-                    'ClinicId' => Clinic::where('MobileNo', User::find($patient->DoctorUserId)->PhoneNumber)->first()->Id ?? null
-                ]);
-            }
+        $entities = DB::table('PatientHistoryRogaPariksas')->get()->map(function ($item) {
+            return [
+                'PatientHistoryId' => $item->PatientHistoryId,
+                'RogaPariksaId' => $item->RogaPariksaId,
+            ];
         });
+
+        foreach ($entities as $entity) {
+            RogaPariksa::find($entity['RogaPariksaId'])->update(
+                [
+                    'patient_history_id' => $entity['PatientHistoryId'],
+                ]
+            );
+        }
     }
 }

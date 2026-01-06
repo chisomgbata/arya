@@ -17,6 +17,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Utilities\Get;
@@ -322,214 +323,227 @@ class PatientHistoryForm
                             ]
                         )
                     ,
-                    Tabs\Tab::make('RogaPariska')->schema([
+                    self::rogaPariska(),
 
-                        Section::make('1) Dhosha')
-                            ->description('Select the applicable Dhoshas')
-                            ->schema([
-                                Grid::make(3)
-                                    ->schema([
-                                        Checkbox::make('Vat')->label('Vat'),
-                                        Checkbox::make('Pit')->label('Pit'),
-                                        Checkbox::make('Kaf')->label('Kaf'),
-                                    ]),
-                            ])->collapsible(),
+                    Tabs\Tab::make('HetuPariksa')->schema([
+                        HetuPariksaForm::configure($schema)
+                    ]),
 
-                        // 2. Dooshya (Grouped by Sub-categories)
-                        Section::make('2) Dooshya')
-                            ->schema([
-                                Fieldset::make('Dhatu')
-                                    ->schema([
-                                        Checkbox::make('Rasa'),
-                                        Checkbox::make('Rakta'),
-                                        Checkbox::make('Mansa'),
-                                        Checkbox::make('Meda'),
-                                        Checkbox::make('Asthi'),
-                                        Checkbox::make('Majja'),
-                                        Checkbox::make('Shukra'),
-                                    ])->columns(4),
-
-                                Fieldset::make('Upadhatu')
-                                    ->schema([
-                                        Checkbox::make('Stanya'),
-                                        Checkbox::make('Raja'),
-                                        Checkbox::make('Kandara'),
-                                        Checkbox::make('Sira'),
-                                        Checkbox::make('Dhamani'),
-                                        Checkbox::make('Twacha'),
-                                        Checkbox::make('Snau'),
-                                    ])->columns(4),
-
-                                Fieldset::make('Mala')
-                                    ->schema([
-                                        Checkbox::make('Poorisha'),
-                                        Checkbox::make('Mootra'),
-                                        Checkbox::make('Sweda'),
-                                        Checkbox::make('Kapha'), // Note: Specific Mala Kapha
-                                        Checkbox::make('Pitta'), // Note: Specific Mala Pitta
-                                        Checkbox::make('Khamala'),
-                                        Checkbox::make('Kesha'),
-                                        Checkbox::make('Nakha'),
-                                        Checkbox::make('Akshisneha'),
-                                        Checkbox::make('Loma'),
-                                        Checkbox::make('Shmashru'),
-                                    ])->columns(4),
-                            ]),
-
-                        // 3. Srotasa & Rogamarga (Combined for layout efficiency)
-                        Section::make('Pathology & Channels')
-                            ->schema([
-                                Fieldset::make('3) Srotasa & Srotodushti Type')
-                                    ->schema([
-                                        Checkbox::make('Sanaga')->label('Sanaga'),
-                                        Checkbox::make('Vimargagamana')->label('Vimargagamana'),
-                                        Checkbox::make('Atipravrutti')->label('Atipravrutti'),
-                                        Checkbox::make('Sira_granthi')->label('Sira Granthi'),
-                                    ])->columns(4),
-
-                                Fieldset::make('7) Rogamarga')
-                                    ->schema([
-                                        Checkbox::make('Koshtha'),
-                                        Checkbox::make('Shakha'),
-                                        Checkbox::make('Marma'),
-                                    ])->columns(3),
-                            ]),
-
-                        // 4. Examination Factors (Agni, Locations, Nature)
-                        Section::make('Examination Factors')
-                            ->columns(2)
-                            ->schema([
-                                Radio::make('Agni')
-                                    ->label('4) Agni')
-                                    ->options([
-                                        'Sama' => 'Sama',
-                                        'Vishama' => 'Vishama',
-                                        'Tikshna' => 'Tikshna',
-                                        'Manda' => 'Manda',
-                                    ])->inline(),
-
-                                Radio::make('Udbhavasthana')
-                                    ->label('5) Udbhavasthana')
-                                    ->options([
-                                        'Ama' => 'Ama',
-                                        'Pakwa' => 'Pakwa',
-                                    ])->inline(),
-
-                                Radio::make('Adhishthana')
-                                    ->label('6) Adhishthana')
-                                    ->options([
-                                        'Ama' => 'Ama',
-                                        'Pakwa' => 'Pakwa',
-                                    ])->inline(),
-                            ]),
-
-                        // 8. Vyadhi Swarupa (Nature of Disease)
-                        Section::make('8) Vyadhi Swarupa')
-                            ->columns(3)
-                            ->schema([
-                                Radio::make('Vyadhi_swarupa1')
-                                    ->label('Onset')
-                                    ->options([
-                                        'chirakaari' => 'Chirakaari',
-                                        'aasukaari' => 'Aasukaari',
-                                    ]),
-                                Radio::make('Vyadhi_swarupa2')
-                                    ->label('Severity')
-                                    ->options([
-                                        'mrudu' => 'Mrudu',
-                                        'daaruna' => 'Daaruna',
-                                    ]),
-                                Radio::make('Vyadhi_swarupa3')
-                                    ->label('Chronicity')
-                                    ->options([
-                                        'naveena' => 'Naveena',
-                                        'jeerna' => 'Jeerna',
-                                    ]),
-                            ]),
-
-                        // Detailed Clinical Notes
-                        Section::make('Clinical Observations')
-                            ->schema([
-                                Grid::make(2)->schema([
-                                    Textarea::make('Nidaana')
-                                        ->label('Nidaana (Etiology)')
-                                        ->rows(3),
-                                    Textarea::make('Poorvarupa')
-                                        ->label('Poorvarupa (Prodromal Symptoms)')
-                                        ->rows(3),
-                                    Textarea::make('Roopa')
-                                        ->label('Roopa (Signs & Symptoms)')
-                                        ->rows(3),
-                                    Textarea::make('Sampraapti')
-                                        ->label('Sampraapti (Pathogenesis)')
-                                        ->rows(3),
-                                ]),
-
-                                Grid::make(2)->schema([
-                                    Textarea::make('Upashaya')
-                                        ->label('Upashaya')
-                                        ->rows(2),
-                                    Textarea::make('Anupashaya')
-                                        ->label('Anupashaya')
-                                        ->rows(2),
-                                ]),
-                            ]),
-
-                        // Diagnosis & Prognosis
-                        Section::make('Diagnosis & Prognosis')
-                            ->schema([
-                                Textarea::make('Sambhavitha_vyadhi')
-                                    ->label('Sambhavitha Vyadhi')
-                                    ->rows(2),
-
-                                Textarea::make('Rogavinischaya')
-                                    ->label('Rogavinischaya (Final Diagnosis)')
-                                    ->rows(2),
-
-                                Grid::make(2)
-                                    ->schema([
-                                        Radio::make('Vyadhi_avastha1')
-                                            ->label('Vyadhi Avastha (State)')
-                                            ->options([
-                                                'saama' => 'SAAMA',
-                                                'niraama' => 'NIRAAMA',
-                                            ])->inline(),
-
-                                        Radio::make('Vyadhi_avastha2')
-                                            ->label('Vyadhi Avastha (Depth)')
-                                            ->options([
-                                                'Utthana' => 'UTTHANA',
-                                                'Gambhira' => 'GAMBHIRA',
-                                            ])->inline(),
-                                    ]),
-
-                                Radio::make('Prognosis')
-                                    ->label('Saadhyaasaadhyataa (Prognosis)')
-                                    ->options([
-                                        'saadhya' => 'Saadhya',
-                                        'krichchhrasaadhya' => 'Krichchhrasaadhya',
-                                        'yaapya' => 'Yaapya',
-                                        'pratyaakheya' => 'Pratyaakheya',
-                                        'asadhya' => 'Asadhya',
-                                    ])
-                                    ->inline()
-                                    ->columnSpanFull(),
-                            ]),
-
-                        // Additional Notes
-                        Section::make('Complications & Etiology')
-                            ->schema([
-                                Textarea::make('Upadrava')
-                                    ->label('Upadrava (Complications)')
-                                    ->rows(3),
-                                Textarea::make('Nidana')
-                                    ->label('Nidana (Detailed Etiology)')
-                                    ->rows(3),
-                            ]),
-                    ])->columns()
-                    ,
                 ])->columnSpanFull()
             ]);
+    }
+
+    public static function rogaPariska()
+    {
+
+        return Tabs\Tab::make('RogaPariska')->schema([
+            Group::make()->relationship('rogaPariksa')->schema([
+
+                Section::make('1) Dhosha')
+                    ->description('Select the applicable Dhoshas')
+                    ->schema([
+                        Grid::make(3)
+                            ->schema([
+                                Checkbox::make('Vat')->label('Vat'),
+                                Checkbox::make('Pit')->label('Pit'),
+                                Checkbox::make('Kaf')->label('Kaf'),
+                            ]),
+                    ]),
+
+                // 2. Dooshya (Grouped by Sub-categories)
+                Section::make('2) Dooshya')
+                    ->schema([
+                        Fieldset::make('Dhatu')
+                            ->schema([
+                                Checkbox::make('Rasa'),
+                                Checkbox::make('Rakta'),
+                                Checkbox::make('Mansa'),
+                                Checkbox::make('Meda'),
+                                Checkbox::make('Asthi'),
+                                Checkbox::make('Majja'),
+                                Checkbox::make('Shukra'),
+                            ])->columns(4),
+
+                        Fieldset::make('Upadhatu')
+                            ->schema([
+                                Checkbox::make('Stanya'),
+                                Checkbox::make('Raja'),
+                                Checkbox::make('Kandara'),
+                                Checkbox::make('Sira'),
+                                Checkbox::make('Dhamani'),
+                                Checkbox::make('Twacha'),
+                                Checkbox::make('Snau'),
+                            ])->columns(4),
+
+                        Fieldset::make('Mala')
+                            ->schema([
+                                Checkbox::make('Poorisha'),
+                                Checkbox::make('Mootra'),
+                                Checkbox::make('Sweda'),
+                                Checkbox::make('Kapha'), // Note: Specific Mala Kapha
+                                Checkbox::make('Pitta'), // Note: Specific Mala Pitta
+                                Checkbox::make('Khamala'),
+                                Checkbox::make('Kesha'),
+                                Checkbox::make('Nakha'),
+                                Checkbox::make('Akshisneha'),
+                                Checkbox::make('Loma'),
+                                Checkbox::make('Shmashru'),
+                            ])->columns(4),
+                    ]),
+
+                // 3. Srotasa & Rogamarga (Combined for layout efficiency)
+                Section::make('Pathology & Channels')
+                    ->schema([
+                        Fieldset::make('3) Srotasa & Srotodushti Type')
+                            ->schema([
+                                Checkbox::make('Sanaga')->label('Sanaga'),
+                                Checkbox::make('Vimargagamana')->label('Vimargagamana'),
+                                Checkbox::make('Atipravrutti')->label('Atipravrutti'),
+                                Checkbox::make('Sira_granthi')->label('Sira Granthi'),
+                            ])->columns(4),
+
+                        Fieldset::make('7) Rogamarga')
+                            ->schema([
+                                Checkbox::make('Koshtha'),
+                                Checkbox::make('Shakha'),
+                                Checkbox::make('Marma'),
+                            ])->columns(3),
+                    ]),
+
+                // 4. Examination Factors (Agni, Locations, Nature)
+                Section::make('Examination Factors')
+                    ->columns(2)
+                    ->schema([
+                        Radio::make('Agni')
+                            ->label('4) Agni')
+                            ->options([
+                                'Sama' => 'Sama',
+                                'Vishama' => 'Vishama',
+                                'Tikshna' => 'Tikshna',
+                                'Manda' => 'Manda',
+                            ])->inline(),
+
+                        Radio::make('Udbhavasthana')
+                            ->label('5) Udbhavasthana')
+                            ->options([
+                                'Ama' => 'Ama',
+                                'Pakwa' => 'Pakwa',
+                            ])->inline(),
+
+                        Radio::make('Adhishthana')
+                            ->label('6) Adhishthana')
+                            ->options([
+                                'Ama' => 'Ama',
+                                'Pakwa' => 'Pakwa',
+                            ])->inline(),
+                    ]),
+
+                // 8. Vyadhi Swarupa (Nature of Disease)
+                Section::make('8) Vyadhi Swarupa')
+                    ->columns(3)
+                    ->schema([
+                        Radio::make('Vyadhi_swarupa1')
+                            ->label('Onset')
+                            ->options([
+                                'chirakaari' => 'Chirakaari',
+                                'aasukaari' => 'Aasukaari',
+                            ]),
+                        Radio::make('Vyadhi_swarupa2')
+                            ->label('Severity')
+                            ->options([
+                                'mrudu' => 'Mrudu',
+                                'daaruna' => 'Daaruna',
+                            ]),
+                        Radio::make('Vyadhi_swarupa3')
+                            ->label('Chronicity')
+                            ->options([
+                                'naveena' => 'Naveena',
+                                'jeerna' => 'Jeerna',
+                            ]),
+                    ]),
+
+                // Detailed Clinical Notes
+                Section::make('Clinical Observations')
+                    ->schema([
+                        Grid::make(2)->schema([
+                            Textarea::make('Nidaana')
+                                ->label('Nidaana (Etiology)')
+                                ->rows(3),
+                            Textarea::make('Poorvarupa')
+                                ->label('Poorvarupa (Prodromal Symptoms)')
+                                ->rows(3),
+                            Textarea::make('Roopa')
+                                ->label('Roopa (Signs & Symptoms)')
+                                ->rows(3),
+                            Textarea::make('Sampraapti')
+                                ->label('Sampraapti (Pathogenesis)')
+                                ->rows(3),
+                        ]),
+
+                        Grid::make(2)->schema([
+                            Textarea::make('Upashaya')
+                                ->label('Upashaya')
+                                ->rows(2),
+                            Textarea::make('Anupashaya')
+                                ->label('Anupashaya')
+                                ->rows(2),
+                        ]),
+                    ]),
+
+                // Diagnosis & Prognosis
+                Section::make('Diagnosis & Prognosis')
+                    ->schema([
+                        Textarea::make('Sambhavitha_vyadhi')
+                            ->label('Sambhavitha Vyadhi')
+                            ->rows(2),
+
+                        Textarea::make('Rogavinischaya')
+                            ->label('Rogavinischaya (Final Diagnosis)')
+                            ->rows(2),
+
+                        Grid::make(2)
+                            ->schema([
+                                Radio::make('Vyadhi_avastha1')
+                                    ->label('Vyadhi Avastha (State)')
+                                    ->options([
+                                        'saama' => 'SAAMA',
+                                        'niraama' => 'NIRAAMA',
+                                    ])->inline(),
+
+                                Radio::make('Vyadhi_avastha2')
+                                    ->label('Vyadhi Avastha (Depth)')
+                                    ->options([
+                                        'Utthana' => 'UTTHANA',
+                                        'Gambhira' => 'GAMBHIRA',
+                                    ])->inline(),
+                            ]),
+
+                        Radio::make('Prognosis')
+                            ->label('Saadhyaasaadhyataa (Prognosis)')
+                            ->options([
+                                'saadhya' => 'Saadhya',
+                                'krichchhrasaadhya' => 'Krichchhrasaadhya',
+                                'yaapya' => 'Yaapya',
+                                'pratyaakheya' => 'Pratyaakheya',
+                                'asadhya' => 'Asadhya',
+                            ])
+                            ->inline()
+                            ->columnSpanFull(),
+                    ]),
+
+                // Additional Notes
+                Section::make('Complications & Etiology')
+                    ->schema([
+                        Textarea::make('Upadrava')
+                            ->label('Upadrava (Complications)')
+                            ->rows(3),
+                        Textarea::make('Nidana')
+                            ->label('Nidana (Detailed Etiology)')
+                            ->rows(3),
+                    ]),
+            ])->columns()
+        ]);
+
     }
 
 }

@@ -65,7 +65,7 @@ class PatientHistory extends Model implements Eventable
 
     public function hetuPariksa(): HasOne
     {
-        return $this->hasOne(HetuPariksa::class, 'PatientHistoryId');
+        return $this->hasOne(HetuPariksa::class, 'PatientHistoryId')->select(['Id', 'PatientHistoryId', 'Responses']);
     }
 
     public function panchakarmas(): BelongsToMany
@@ -79,9 +79,9 @@ class PatientHistory extends Model implements Eventable
         return $this->hasMany(PatientHistoryPanchakarma::class, 'PatientHistoryId');
     }
 
-    public function rogaPariksa(): BelongsToMany
+    public function rogaPariksa(): HasOne
     {
-        return $this->belongsToMany(RogaPariksa::class, 'PatientHistoryRogaPariksa', 'PatientHistoryId', 'RogaPariksaId')->using(PatientHistoryRogaPariksa::class);
+        return $this->hasOne(RogaPariksa::class);
     }
 
     public function toCalendarEvent(): CalendarEvent

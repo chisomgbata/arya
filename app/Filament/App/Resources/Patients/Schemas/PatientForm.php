@@ -97,7 +97,7 @@ class PatientForm
                                 })->toArray()
                             )
                     ])
-                    ->columnSpan(1); // Each fieldset takes 1 grid slot
+                    ->columnSpan(1);
             })
             ->values()
             ->toArray();
@@ -105,8 +105,8 @@ class PatientForm
         // 2. Wrap all those fieldsets in a Grid
         return [
             Grid::make([
-                'default' => 1,    // 1 column on mobile
-                'md' => 2,         // 2 columns on tablets
+                'default' => 1,
+                'md' => 2,
             ])
                 ->schema($fieldsets)
         ];

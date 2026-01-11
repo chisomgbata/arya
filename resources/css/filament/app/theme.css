@@ -8,6 +8,7 @@
 @source '../../../../vendor/emmanpbarrameda/filament-take-picture-field/resources/views/**/*.blade.php';
 @source '../../../../resources/views/**/*';
 @source '../../../../vendor/guava/calendar/resources/**/*';
+@source 'app/Filament/App/Resources/Patients/RelationManagers/PatientFilesRelationManager.php'
 
 canvas[x-ref="canvas"] {
     height: 42rem !important;

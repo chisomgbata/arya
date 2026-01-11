@@ -31,9 +31,19 @@ class Patient extends Model
         return $this->hasMany(PatientHistory::class, 'PatientId');
     }
 
+    public function patientFiles(): HasMany
+    {
+        return $this->hasMany(PatientFile::class, 'Patient_id');
+    }
+
     public function prakruti(): HasOne
     {
         return $this->hasOne(PatientPrakruti::class, 'PatientId');
+    }
+
+    public function sketches(): HasMany
+    {
+        return $this->hasMany(Sketch::class, 'Patient_id');
     }
 
     protected function casts(): array

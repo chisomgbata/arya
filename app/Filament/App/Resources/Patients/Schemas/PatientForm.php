@@ -3,9 +3,9 @@
 namespace App\Filament\App\Resources\Patients\Schemas;
 
 use App\Models\MainPrakrutiBodyPartOrFood;
+use emmanpbarrameda\FilamentTakePictureField\Forms\Components\TakePicture;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -15,7 +15,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
-use Saade\FilamentAutograph\Forms\Components\SignaturePad;
 
 class PatientForm
 {
@@ -36,14 +35,16 @@ class PatientForm
                     'male' => 'Male', 'female' => 'Female', "others" => 'Others'
                 ])->columns(3),
                 TextArea::make('Address')->columnSpanFull(),
-                FileUpload::make('Image')
-                    ->image()
+                TakePicture::make('Image')
+                    ->label('Patient Image')
                     ->disk('public')
                     ->visibility('public')
-                ,
+                    ->showCameraSelector()
+                    ->aspect('16:9')
+                    ->imageQuality(80)
+                    ->shouldDeleteOnEdit(false),
 
                 Textarea::make('complain_of'),
-                SignaturePad::make('sketch')->columnSpanFull(),
 
 
                 Section::make('Prakruti Analysis')

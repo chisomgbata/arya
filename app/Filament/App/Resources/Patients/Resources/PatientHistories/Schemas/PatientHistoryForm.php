@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\Patients\Resources\PatientHistories\Schemas;
 
 use App\Models\Anupana;
+use App\Models\DiseaseTypeMedicine;
 use App\Models\MedicineForm;
 use App\Models\Panchakarma;
 use App\Models\TimeOfAdministration;
@@ -21,6 +22,7 @@ use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class PatientHistoryForm
@@ -30,67 +32,157 @@ class PatientHistoryForm
         return $schema
             ->components([
                 Tabs::make('Tabs')->schema([
-                    Tabs\Tab::make('Info')->schema([
+                    Tabs\Tab::make('Info')
+                        ->schema([
+                            ModalTableSelect::make("diseases")
+                                ->multiple()
+                                ->tableConfiguration(DiseaseTable::class)
+                                ->relationship("diseases", "Name")
+                                ->live(),
 
-                        ModalTableSelect::make("diseases")
-                            ->multiple()
-                            ->tableConfiguration(DiseaseTable::class)
-                            ->relationship("diseases", "Name")
-                            ->live(),
+                            ModalTableSelect::make("symptoms")
+                                ->multiple()
+                                ->tableConfiguration(SymptomTable::class)
+                                ->relationship("symptoms", "Name")
+                                ->key(
+                                    fn(Get $get) => "symptoms-" .
+                                        md5(json_encode($get("diseases"))),
+                                )
+                                ->tableArguments(
+                                    fn(Get $get): array => [
+                                        "diseases" => $get("diseases"),
+                                    ],
+                                ),
 
-                        ModalTableSelect::make("symptoms")
-                            ->multiple()
-                            ->tableConfiguration(SymptomTable::class)
-                            ->relationship("symptoms", "Name")
-                            ->key(
-                                fn(Get $get) => "symptoms-" .
-                                    md5(json_encode($get("diseases"))),
-                            )
-                            ->tableArguments(
-                                fn(Get $get): array => [
-                                    "diseases" => $get("diseases"),
-                                ],
-                            ),
+                            Select::make('modern_symptoms')->relationship('modernSymptoms', 'Name')
+                                ->multiple()
+                                ->searchable()
+                                ->preload()
+                                ->createOptionForm([
+                                    TextInput::make('Name')->required(),
+                                    Textarea::make('Description'),
+                                ]),
 
-                        Select::make('modern_symptoms')->relationship('modernSymptoms', 'Name')
-                            ->multiple()
-                            ->searchable()
-                            ->preload()
-                            ->createOptionForm([
-                                TextInput::make('Name')->required(),
-                                Textarea::make('Description'),
-                            ]),
+                            Repeater::make('Prescriptions')
+                                ->relationship('prescriptions')
+                                ->table([
+                                    Repeater\TableColumn::make('Medicine'),
+                                    Repeater\TableColumn::make('MedicineFormName'),
+                                    Repeater\TableColumn::make('Dose'),
+                                    Repeater\TableColumn::make('TimeOfAdministration'),
+                                    Repeater\TableColumn::make('Anupana'),
+                                    Repeater\TableColumn::make('Duration'),
+                                    Repeater\TableColumn::make('Amount'),
+                                ])
+                                ->schema([
+                                    Select::make('MedicineId')
+                                        ->relationship('medicine', 'Name')
+                                        ->searchable()
+                                        ->preload()
+                                        ->columnSpanFull()
+                                        ->required()
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, Set $set) {
 
-                        Repeater::make('Prescriptions')->relationship('prescriptions')->table([
-                            Repeater\TableColumn::make('Medicine'),
-                            Repeater\TableColumn::make('Dose'),
-                            Repeater\TableColumn::make('TimeOfAdministration'),
-                            Repeater\TableColumn::make('Anupana'),
-                            Repeater\TableColumn::make('MedicineFormName'),
-                            Repeater\TableColumn::make('Amount'),
+                                            if (blank($state)) {
+                                                $set('Dose', null);
+                                                $set('TimeOfAdministration', null);
+                                                $set('Anupana', null);
+                                                $set('MedicineFormName', null);
+                                                $set('Amount', null);
+                                                $set('Duration', null);
+                                                return;
+                                            }
 
-                        ])->schema([
-                            Select::make('MedicineId')->searchable()->preload()->relationship('medicine', 'Name')->columnSpanFull()->required(),
-                            TextInput::make('Dose'),
-                            TextInput::make('TimeOfAdministration')->datalist(fn() => TimeOfAdministration::all()->pluck('Name', 'Id')),
-                            TextInput::make('Anupana')->datalist(fn() => Anupana::all()->pluck('Name', 'Id')),
-                            TextInput::make('MedicineFormName')->datalist(fn() => MedicineForm::all()->pluck('Name', 'Id')),
-                            TextInput::make('Amount')->numeric(),
-                        ])->compact()->columnSpanFull()->cloneable(),
+                                            // If no medicine is selected, stop here
+                                            if (!$state) {
+                                                return;
+                                            }
 
-                        TextInput::make('ConsultationFee')
-                            ->required()
-                            ->numeric(),
-                        TextInput::make('MedicinesFee')
-                            ->required()
-                            ->numeric(),
+                                            // 3. Find the first matching DiseaseTypeMedicine
+                                            // We load relationships to get the Names for the text inputs
+                                            $dtMedicine = DiseaseTypeMedicine::query()
+                                                ->where('MedicineId', $state)
+                                                ->with(['timeOfAdministration', 'anupana', 'medicine.medicineForm'])
+                                                ->first();
 
-                        DateTimePicker::make('NextAppointmentDate'),
-                        Textarea::make('Remark')
-                            ->columnSpanFull(),
-                        Textarea::make('Note')
-                            ->columnSpanFull(),
-                    ])->columns(3),
+                                            if ($dtMedicine) {
+                                                // 4. Update the fields using $set('field_name', value)
+
+                                                // Assuming 'Dose' exists on DiseaseTypeMedicine
+                                                if (isset($dtMedicine->Dose)) {
+                                                    $set('Dose', $dtMedicine->Dose);
+                                                }
+
+                                                if (isset($dtMedicine->Duration)) {
+                                                    $set('Duration', $dtMedicine->Duration);
+                                                }
+
+                                                // For TextInput with datalist, we typically set the Name string
+                                                if ($dtMedicine->timeOfAdministration) {
+                                                    $set('TimeOfAdministration', $dtMedicine->timeOfAdministration->Name);
+                                                }
+
+                                                if ($dtMedicine->anupana) {
+                                                    $set('Anupana', $dtMedicine->anupana->Name);
+                                                }
+
+                                                // Assuming 'Amount' exists on DiseaseTypeMedicine
+                                                if (isset($dtMedicine->Amount)) {
+                                                    $set('Amount', $dtMedicine->Amount);
+                                                }
+
+                                                // For MedicineFormName, usually this is on the Medicine model itself?
+                                                // Adjust this path based on where 'Form' information is actually stored.
+                                                // Example: $dtMedicine->medicine->FormName
+                                                if ($dtMedicine->medicine && isset($dtMedicine->medicine->medicineForm->Name)) {
+                                                    $set('MedicineFormName', $dtMedicine->medicine->medicineForm->Name);
+                                                }
+                                            }
+                                        }),
+
+                                    TextInput::make('MedicineFormName')
+                                        ->datalist(fn() => MedicineForm::all()->pluck('Name')),
+
+                                    TextInput::make('Dose'),
+
+                                    TextInput::make('TimeOfAdministration')
+                                        ->datalist(fn() => TimeOfAdministration::all()->pluck('Name')), // Datalist usually expects simple array of strings
+
+                                    TextInput::make('Anupana')
+                                        ->datalist(fn() => Anupana::all()->pluck('Name')),
+                                    TextInput::make('Duration'),
+
+                                    TextInput::make('Amount')
+                                        ->extraAttributes(['class' => 'medicine-amount'])
+                                        ->afterStateUpdatedJs(<<<'JS'
+        let prescriptions = $get('../')
+        let total = Object.values(prescriptions).reduce((acc, curr) => {
+        return acc + (+curr.Amount || 0);
+        }, 0);
+        $set('../../MedicinesFee', total)
+        JS
+                                        )
+                                        ->numeric(),
+                                ])
+                                ->compact()
+                                ->columnSpanFull()
+                                ->cloneable(),
+
+                            TextInput::make('ConsultationFee')
+                                ->required()
+                                ->numeric(),
+                            TextInput::make('MedicinesFee')
+                                ->id('medicine-fee')
+                                ->required()
+                                ->numeric(),
+
+                            DateTimePicker::make('NextAppointmentDate'),
+                            Textarea::make('Remark')
+                                ->columnSpanFull(),
+                            Textarea::make('Note')
+                                ->columnSpanFull(),
+                        ])->columns(3),
                     Tabs\Tab::make("Vital")->schema([
                         Fieldset::make("Vitals")
                             ->relationship("vital")

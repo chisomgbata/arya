@@ -20,6 +20,12 @@ class Patient extends Model
         return $this->belongsTo(Clinic::class, 'ClinicId');
     }
 
+
+    public function custom_tab_data()
+    {
+        return $this->hasOne(self::class, 'Id', 'Id');
+    }
+
     public function patientHistories(): HasMany
     {
         return $this->hasMany(PatientHistory::class, 'PatientId');

@@ -61,19 +61,19 @@ class DiseaseResource extends Resource
 
             RichEditor::make("ChikitsaSutra"),
 
-            TextInput::make("Samprapti"),
+            RichEditor::make("Samprapti"),
 
-            TextInput::make("Upadrava"),
+            RichEditor::make("Upadrava"),
 
-            TextInput::make("Panchakarma"),
+            RichEditor::make("Panchakarma"),
 
-            TextInput::make("Causes"),
+            RichEditor::make("Causes"),
 
-            TextInput::make("ArishtaLaxana"),
+            RichEditor::make("ArishtaLaxana"),
 
-            TextInput::make("DifferentialDiagnosis"),
+            RichEditor::make("DifferentialDiagnosis"),
 
-            TextInput::make("LaboratoryInvestions"),
+            RichEditor::make("LaboratoryInvestions"),
         ]);
     }
 

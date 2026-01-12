@@ -3,7 +3,10 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.4",
@@ -13,7 +16,7 @@
         "guava/calendar": "^2.1",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "saade/filament-autograph": "^4.0"
+        "saade/filament-autograph": "4.x"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -87,10 +90,17 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
+            "cweagans/composer-patches": true,
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
         }
     },
-    "minimum-stability": "stable",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/chisomgbata/filament-autograph.git"
+        }
+    ],
+    "minimum-stability": "dev",
     "prefer-stable": true
 }

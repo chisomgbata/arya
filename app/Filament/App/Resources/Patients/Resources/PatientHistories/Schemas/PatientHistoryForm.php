@@ -3,14 +3,17 @@
 namespace App\Filament\App\Resources\Patients\Resources\PatientHistories\Schemas;
 
 use App\Models\Anupana;
+use App\Models\Disease;
 use App\Models\DiseaseTypeMedicine;
 use App\Models\MedicineForm;
 use App\Models\Panchakarma;
+use App\Models\Symptom;
 use App\Models\TimeOfAdministration;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\ModalTableSelect;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -34,34 +37,73 @@ class PatientHistoryForm
                 Tabs::make('Tabs')->schema([
                     Tabs\Tab::make('Info')
                         ->schema([
-                            ModalTableSelect::make("diseases")
-                                ->multiple()
-                                ->tableConfiguration(DiseaseTable::class)
-                                ->relationship("diseases", "Name")
-                                ->live(),
 
-                            ModalTableSelect::make("symptoms")
+                            Select::make("diseases")
+                                ->columnSpanFull()
                                 ->multiple()
-                                ->tableConfiguration(SymptomTable::class)
-                                ->relationship("symptoms", "Name")
-                                ->key(
-                                    fn(Get $get) => "symptoms-" .
-                                        md5(json_encode($get("diseases"))),
+                                ->relationship(
+                                    name: "diseases",
+                                    titleAttribute: "Name",
+                                    modifyQueryUsing: fn($query) => $query->select(['Diseases.Id', 'Diseases.Name'])
                                 )
-                                ->tableArguments(
-                                    fn(Get $get): array => [
-                                        "diseases" => $get("diseases"),
-                                    ],
-                                ),
+                                ->preload()
+                                ->searchable()
+                                ->live()
+                            ,
 
-                            Select::make('modern_symptoms')->relationship('modernSymptoms', 'Name')
+                            Placeholder::make('disease_information_display')
+                                ->hiddenLabel()
+                                ->label('')
+                                ->dehydrated('false')
+                                ->content(function (Get $get) {
+                                    $ids = $get('diseases') ?? [];
+
+                                    $diseases = Disease::whereIn('Id', $ids)->get();
+
+                                    return view('diseases', [
+                                        'diseases' => $diseases,
+                                    ]);
+                                })
+                                ->columnSpanFull(),
+                            CheckboxList::make("symptoms")
+                                ->relationship("symptoms", "Name", modifyQueryUsing: fn($query) => $query->select(['Symptoms.Id', 'Symptoms.Name']))
+                                ->options(function (Get $get) {
+                                    $diseaseIds = $get('diseases');
+                                    if (!$diseaseIds) return [];
+
+                                    return Symptom::whereHas('diseases', fn($query) => $query->whereIn('Id', $diseaseIds))->pluck('Name', 'Id');
+
+                                }),
+                            Select::make("symptoms")
+                                ->multiple()
+                                ->relationship("symptoms", "Name", modifyQueryUsing: fn($query) => $query->select(['Symptoms.Id', 'Symptoms.Name']))
+                                ->options(function (Get $get) {
+                                    $diseaseIds = $get('diseases');
+                                    if (!$diseaseIds) return [];
+
+                                    return Disease::whereIn('Id', $diseaseIds)
+                                        ->with('symptoms')
+                                        ->get()
+                                        ->mapWithKeys(function ($disease) {
+                                            return [
+                                                $disease->Name => $disease->symptoms->pluck('Name', 'Id')->toArray()
+                                            ];
+                                        });
+                                })
+                            ,
+
+                            Select::make('modern_symptoms')
+                                ->relationship('modernSymptoms', 'Name')
                                 ->multiple()
                                 ->searchable()
                                 ->preload()
                                 ->createOptionForm([
                                     TextInput::make('Name')->required(),
                                     Textarea::make('Description'),
-                                ]),
+                                ])->createOptionUsing(function () {
+
+                                }),
+
 
                             Repeater::make('Prescriptions')
                                 ->relationship('prescriptions')
@@ -142,15 +184,15 @@ class PatientHistoryForm
                                         }),
 
                                     TextInput::make('MedicineFormName')
-                                        ->datalist(fn() => MedicineForm::all()->pluck('Name')),
+                                        ->datalist(fn() => MedicineForm::query()->pluck('Name')),
 
                                     TextInput::make('Dose'),
 
                                     TextInput::make('TimeOfAdministration')
-                                        ->datalist(fn() => TimeOfAdministration::all()->pluck('Name')), // Datalist usually expects simple array of strings
+                                        ->datalist(fn() => TimeOfAdministration::query()->pluck('Name')), // Datalist usually expects simple array of strings
 
                                     TextInput::make('Anupana')
-                                        ->datalist(fn() => Anupana::all()->pluck('Name')),
+                                        ->datalist(fn() => Anupana::query()->pluck('Name')),
                                     TextInput::make('Duration'),
 
                                     TextInput::make('Amount')
@@ -195,8 +237,8 @@ class PatientHistoryForm
                                 TextInput::make("DiabetesCount")->default(''),
                             ]),
                     ]),
-                    Tabs\Tab::make("Women History")->schema([
-                        Fieldset::make("Women History")
+                    Tabs\Tab::make("Gynec History")->schema([
+                        Fieldset::make("Gynec History")
                             ->relationship("womenHistory")
                             ->schema([
                                 Section::make('General Assessment')
@@ -381,30 +423,21 @@ class PatientHistoryForm
                                         TextInput::make('Detail'),
                                     ])
                                     ->afterStateHydrated(function (Repeater $component, ?array $state) {
-                                        // Get all master records
                                         $masters = Panchakarma::all();
 
-                                        // Current DB data (or empty array)
                                         $existing = collect($state ?? []);
 
                                         $items = [];
 
                                         foreach ($masters as $master) {
-                                            // Check if we already have a saved row for this Panchakarma
-                                            // Ensure you match the type (string/int) correctly
                                             $found = $existing->firstWhere('PanchakarmaId', $master->Id);
 
                                             if ($found) {
-                                                // If found, use the existing data.
-                                                // CRITICAL: This includes the Pivot Table's Primary Key ('id'),
-                                                // which tells Filament to UPDATE this row instead of creating a new one.
                                                 $items[] = $found;
                                             } else {
-                                                // If not found, create a "stub" for the form
                                                 $items[] = [
                                                     'PanchakarmaId' => $master->Id,
                                                     'Detail' => null,
-                                                    // No 'id' here, so Filament will CREATE this row on save
                                                 ];
                                             }
                                         }

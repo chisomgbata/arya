@@ -308,6 +308,7 @@ class PatientHistoryForm
                                             )
                                             ->numeric(),
                                     ])
+                                    ->default([])
                                     ->compact()
                                     ->columnSpanFull()
                                     ->cloneable(),

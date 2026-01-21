@@ -11,7 +11,7 @@ class CreatePatientHistory extends CreateRecord
 
     protected function getRedirectUrl(): string
     {
-        return static::getResource()::getUrl('index');
+        return PatientHistoryResource::getUrl('index');
     }
 
 }

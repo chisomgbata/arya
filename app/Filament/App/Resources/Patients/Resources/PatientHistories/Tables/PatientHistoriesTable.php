@@ -11,6 +11,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -106,6 +107,13 @@ class PatientHistoriesTable
 
                         return redirect(PatientHistoryResource::getUrl('edit', ['record' => $newHistory, 'patient' => $newHistory->patient]));
                     }),
+
+                Action::make('print')
+                    ->button()
+                    ->color('gray')
+                    ->icon(Heroicon::Printer)
+                    ->url(fn(PatientHistory $record): string => route('order.print', $record))
+                    ->openUrlInNewTab(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

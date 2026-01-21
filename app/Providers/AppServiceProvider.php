@@ -25,9 +25,8 @@ class AppServiceProvider extends ServiceProvider
         Model::shouldBeStrict();
         Model::automaticallyEagerLoadRelationships();
 
-        if($this->app->environment() === 'production'){
-           Url::forceScheme('https');
+        if ($this->app->environment() === 'production') {
+            Url::forceScheme('https');
         }
-        //
     }
 }

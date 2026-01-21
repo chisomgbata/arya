@@ -36,6 +36,11 @@ class Patient extends Model
         return $this->hasMany(PatientFile::class, 'Patient_id');
     }
 
+    public function captures(): HasMany
+    {
+        return $this->HasMany(ImageCapture::class);
+    }
+
     public function prakruti(): HasOne
     {
         return $this->hasOne(PatientPrakruti::class, 'PatientId');

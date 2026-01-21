@@ -4,21 +4,25 @@ namespace App\Filament\App\Resources\Patients\Resources\PatientHistories\Schemas
 
 use App\Models\Anupana;
 use App\Models\Disease;
+use App\Models\DiseaseType;
 use App\Models\DiseaseTypeMedicine;
+use App\Models\Medicine;
 use App\Models\MedicineForm;
 use App\Models\Panchakarma;
-use App\Models\Symptom;
 use App\Models\TimeOfAdministration;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -27,6 +31,8 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
+use Illuminate\Support\Str;
 
 class PatientHistoryForm
 {
@@ -36,207 +42,292 @@ class PatientHistoryForm
             ->components([
                 Tabs::make('Tabs')->schema([
                     Tabs\Tab::make('Info')
-                        ->schema([
+                        ->schema(function () {
+                            $globalAnupanas = Anupana::query()->pluck('Name', 'Id');
+                            $globalTimeOfAdministrations = TimeOfAdministration::query()->pluck('Name', 'Id');
+                            $globalMedicineForms = MedicineForm::query()->pluck('Name', 'Id');
+                            return [
 
-                            Select::make("diseases")
-                                ->columnSpanFull()
-                                ->multiple()
-                                ->relationship(
-                                    name: "diseases",
-                                    titleAttribute: "Name",
-                                    modifyQueryUsing: fn($query) => $query->select(['Diseases.Id', 'Diseases.Name'])
-                                )
-                                ->preload()
-                                ->searchable()
-                                ->live()
-                            ,
+                                Select::make("diseases")
+                                    ->columnSpanFull()
+                                    ->multiple()
+                                    ->relationship(
+                                        name: "diseases",
+                                        titleAttribute: "Name",
+                                        modifyQueryUsing: fn($query) => $query->select(['Diseases.Id', 'Diseases.Name'])
+                                    )
+                                    ->preload()
+                                    ->searchable()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Set $set) {
+                                        $data = self::getDiseaseTypesData($state);
+                                        $set('diseases_types_display', $data);
+                                        $set('symptoms', []);
+                                    })
+                                ,
 
-                            Placeholder::make('disease_information_display')
-                                ->hiddenLabel()
-                                ->label('')
-                                ->dehydrated('false')
-                                ->content(function (Get $get) {
-                                    $ids = $get('diseases') ?? [];
+                                Placeholder::make('disease_information_display')
+                                    ->hiddenLabel()
+                                    ->label('')
+                                    ->dehydrated(false)
+                                    ->content(function (Get $get) {
+                                        $ids = $get('diseases') ?? [];
 
-                                    $diseases = Disease::whereIn('Id', $ids)->get();
+                                        $diseases = Disease::whereIn('Id', $ids)->get();
 
-                                    return view('diseases', [
-                                        'diseases' => $diseases,
-                                    ]);
-                                })
-                                ->columnSpanFull(),
-                            CheckboxList::make("symptoms")
-                                ->relationship("symptoms", "Name", modifyQueryUsing: fn($query) => $query->select(['Symptoms.Id', 'Symptoms.Name']))
-                                ->options(function (Get $get) {
-                                    $diseaseIds = $get('diseases');
-                                    if (!$diseaseIds) return [];
+                                        return view('diseases', [
+                                            'diseases' => $diseases,
+                                        ]);
+                                    })
+                                    ->columnSpanFull(),
 
-                                    return Symptom::whereHas('diseases', fn($query) => $query->whereIn('Id', $diseaseIds))->pluck('Name', 'Id');
+                                Select::make("symptoms")
+                                    ->multiple()
+                                    ->relationship("symptoms", "Name", modifyQueryUsing: fn($query, Get $get) => $query
+                                        ->whereHas('diseaseTypes', fn($q) => $q->whereIn('diseaseId', $get('diseases'))
+                                        )
+                                        ->distinct()
+                                        ->select(['Symptoms.Id', 'Symptoms.Name'])
+                                    )
+                                    ->columnSpan(2)
+                                    ->preload()
+                                ,
+                                Select::make('modern_symptoms')
+                                    ->relationship('modernSymptoms', 'Name')
+                                    ->multiple()
+                                    ->searchable()
+                                    ->preload()
+                                    ->createOptionForm([
+                                        TextInput::make('Name')->required(),
+                                        Textarea::make('Description'),
+                                    ])->createOptionUsing(function () {
 
-                                }),
-                            Select::make("symptoms")
-                                ->multiple()
-                                ->relationship("symptoms", "Name", modifyQueryUsing: fn($query) => $query->select(['Symptoms.Id', 'Symptoms.Name']))
-                                ->options(function (Get $get) {
-                                    $diseaseIds = $get('diseases');
-                                    if (!$diseaseIds) return [];
+                                    }),
+                                Repeater::make('diseases_types_display')
+                                    ->hiddenLabel()
+                                    ->dehydrated(false)
+                                    ->deletable(false)
+                                    ->addable(false)
+                                    ->cloneable(false)
+                                    ->reorderable(false)
+                                    ->columns(8)
+                                    ->columnSpanFull()
+                                    ->default([])
+                                    ->table([
+                                        Repeater\TableColumn::make('Disease'),
+                                        Repeater\TableColumn::make('Medicine'),
+                                        Repeater\TableColumn::make('Disease Type'),
+                                        Repeater\TableColumn::make('Symptoms'),
+                                    ])
+                                    ->afterStateHydrated(function (Get $get, Set $set) {
+                                        $diseases = $get('diseases');
+                                        if (!empty($diseases)) {
+                                            $set('diseases_types_display', self::getDiseaseTypesData($diseases));
+                                        }
+                                    })
+                                    ->schema(fn(Get $get, Set $set) => [
+                                        Hidden::make('type_name'),
+                                        Hidden::make('description'),
+                                        Placeholder::make('disease')
+                                            ->label('Disease'),
+                                        Actions::make([
+                                            Action::make('manage_medicines')
+                                                ->label('Meds')
+                                                ->icon('hugeicons-medicine-02')
+                                                ->color('primary')
+                                                ->modal()
+                                                ->schema(fn(Get $get) => [
+                                                    Repeater::make('Medicines')
+                                                        ->deletable(false)
+                                                        ->addable(false)
+                                                        ->cloneable(false)
+                                                        ->reorderable(false)
+                                                        ->hintActions([
+                                                            Action::make('add_medicine')
+                                                                ->modalHeading(fn() => 'Add Medicine For ' . $get('disease') . ' : ' . $get('type_name'))
+                                                                ->schema([
+                                                                    Hidden::make('DiseaseTypeId')->default(fn() => $get('type_id')),
+                                                                    Hidden::make('IsSpecial')->default(true),
+                                                                    Select::make('MedicineId')->label('Medicine')->searchable()->options(function ($query) {
+                                                                        return Medicine::query()->pluck('Name', 'Id');
+                                                                    }),
+                                                                    TextInput::make('Dose')->required(),
 
-                                    return Disease::whereIn('Id', $diseaseIds)
-                                        ->with('symptoms')
-                                        ->get()
-                                        ->mapWithKeys(function ($disease) {
-                                            return [
-                                                $disease->Name => $disease->symptoms->pluck('Name', 'Id')->toArray()
-                                            ];
-                                        });
-                                })
-                            ,
+                                                                    Select::make('TimeOfAdministrationId')
+                                                                        ->label('Time of Administration')
+                                                                        ->searchable()
+                                                                        ->options($globalTimeOfAdministrations),
 
-                            Select::make('modern_symptoms')
-                                ->relationship('modernSymptoms', 'Name')
-                                ->multiple()
-                                ->searchable()
-                                ->preload()
-                                ->createOptionForm([
-                                    TextInput::make('Name')->required(),
-                                    Textarea::make('Description'),
-                                ])->createOptionUsing(function () {
+                                                                    Select::make('AnupanaId')
+                                                                        ->label('Anupana')
+                                                                        ->searchable()
+                                                                        ->options($globalAnupanas),
 
-                                }),
+                                                                    TextInput::make('Duration')->required(),
+                                                                ])->action(function ($data) {
+                                                                    DiseaseTypeMedicine::create($data);
+                                                                })->button()
+                                                        ])
+                                                        ->table([
+                                                            Repeater\TableColumn::make('Select'),
+                                                            Repeater\TableColumn::make('MedicineName'),
+                                                            Repeater\TableColumn::make('MedicineFormName'),
+                                                            Repeater\TableColumn::make('Dose'),
+                                                            Repeater\TableColumn::make('TimeOfAdministration'),
+                                                            Repeater\TableColumn::make('Anupana'),
+                                                            Repeater\TableColumn::make('Duration'),
+                                                        ])
+                                                        ->schema(function () use ($globalAnupanas, $globalTimeOfAdministrations, $globalMedicineForms) {
+                                                            return [
+                                                                Checkbox::make('Selected'),
+                                                                Hidden::make('MedicineId'),
+                                                                Hidden::make('MedicineName'),
+                                                                Placeholder::make('MedicineName')
+                                                                    ->label('Name')
+                                                                ,
+
+                                                                TextInput::make('MedicineFormName')
+                                                                    ->label('Medicine Form')
+                                                                    ->datalist($globalMedicineForms),
+
+                                                                TextInput::make('Dose'),
+
+                                                                TextInput::make('TimeOfAdministration')
+                                                                    ->datalist($globalTimeOfAdministrations),
+
+                                                                TextInput::make('Anupana')
+                                                                    ->datalist($globalAnupanas),
+
+                                                                TextInput::make('Duration'),
+                                                            ];
+                                                        })
+                                                        ->default(function () use ($get) {
+                                                            return DiseaseTypeMedicine::query()
+                                                                ->where('DiseaseTypeId', $get('type_id'))
+                                                                ->where(fn($query) => $query->where('IsSpecial', false)->orWhere('CreatedBy', auth()->user()->Id))
+                                                                ->with([
+                                                                    'medicine' => fn($q) => $q->select(['Id', 'Name', 'MedicineFormId']),
+                                                                    'medicine.medicineForm' => fn($q) => $q->select(['Id', 'Name']),
+                                                                    'timeOfAdministration' => fn($q) => $q->select(['Id', 'Name']),
+                                                                    'anupana' => fn($q) => $q->select(['Id', 'Name']),
+
+                                                                ])
+                                                                ->select(['Id', 'MedicineId', 'Dose', 'Duration', 'TimeOfAdministrationId', 'AnupanaId'])
+                                                                ->get()
+                                                                ->map(fn($item) => [
+                                                                    'MedicineId' => $item->medicine?->Id,
+                                                                    'MedicineName' => $item->medicine?->Name,
+                                                                    'MedicineFormName' => $item->medicine?->medicineForm?->Name,
+                                                                    'Dose' => $item->Dose,
+                                                                    'TimeOfAdministration' => $item->timeOfAdministration?->Name,
+                                                                    'Anupana' => $item->anupana?->Name,
+                                                                    'Duration' => $item->Duration,
+                                                                ])
+                                                                ->toArray();
+                                                        })
+                                                ])->modalWidth(Width::SevenExtraLarge)
+                                                ->action(function ($data) use ($get, $set) {
+                                                    $fields = collect($data['Medicines'])->where('Selected', true)->toArray();
+                                                    $value = array_map(fn($field) => [
+                                                        Str::uuid()->toString() => [
+                                                            'MedicineId' => $field['MedicineId'] ?? '',
+                                                            'MedicineFormName' => $field['MedicineFormName'] ?? '',
+                                                            'Anupana' => $field['Anupana'] ?? '',
+                                                            'Dose' => $field['Dose'] ?? '',
+                                                            'TimeOfAdministration' => $field['TimeOfAdministration'] ?? '',
+                                                            'Duration' => $field['Duration'] ?? '',
+                                                            'Amount' => 0,
+                                                            'MedicineName' => $field['MedicineName'] ?? ''
+                                                        ]
+                                                    ], $fields);
+                                                    $set('Prescriptions', array_merge($get('Prescriptions'),
+                                                            ...$value)
+                                                    );
+
+                                                })
+                                        ])->columnSpan(1),
+                                        Actions::make([
+                                            Action::make('disease_type_detail')
+                                                ->label(fn(Get $get) => $get('type_name')) // Dynamically fetch the text
+                                                ->link()
+                                                ->modal()
+                                                ->modalSubmitAction(false)
+                                                ->modalCancelAction(false)
+                                                ->schema([
+                                                    Placeholder::make('description')
+                                                        ->hiddenLabel()
+                                                ]),
+                                        ])->columnSpan(1),
+
+                                        ViewField::make('symptoms_ui')->hiddenLabel() // Name doesn't matter, it doesn't save data
+                                        ->view('checkboxes')
+                                            ->columnSpan(6)
+                                        ,
+
+                                        Hidden::make('type_id'),
+
+                                    ]),
 
 
-                            Repeater::make('Prescriptions')
-                                ->relationship('prescriptions')
-                                ->table([
-                                    Repeater\TableColumn::make('Medicine'),
-                                    Repeater\TableColumn::make('MedicineFormName'),
-                                    Repeater\TableColumn::make('Dose'),
-                                    Repeater\TableColumn::make('TimeOfAdministration'),
-                                    Repeater\TableColumn::make('Anupana'),
-                                    Repeater\TableColumn::make('Duration'),
-                                    Repeater\TableColumn::make('Amount'),
-                                ])
-                                ->schema([
-                                    Select::make('MedicineId')
-                                        ->relationship('medicine', 'Name')
-                                        ->searchable()
-                                        ->preload()
-                                        ->columnSpanFull()
-                                        ->required()
-                                        ->live()
-                                        ->afterStateUpdated(function ($state, Set $set) {
+                                Repeater::make('Prescriptions')
+                                    ->relationship('prescriptions')
+                                    ->table([
+                                        Repeater\TableColumn::make('Medicine'),
+                                        Repeater\TableColumn::make('MedicineFormName'),
+                                        Repeater\TableColumn::make('Dose'),
+                                        Repeater\TableColumn::make('TimeOfAdministration'),
+                                        Repeater\TableColumn::make('Anupana'),
+                                        Repeater\TableColumn::make('Duration'),
+                                        Repeater\TableColumn::make('Amount'),
+                                    ])
+                                    ->schema([
+                                        Hidden::make('MedicineId'),
+                                        Hidden::make('MedicineName'),
+                                        Placeholder::make('MedicineName'),
 
-                                            if (blank($state)) {
-                                                $set('Dose', null);
-                                                $set('TimeOfAdministration', null);
-                                                $set('Anupana', null);
-                                                $set('MedicineFormName', null);
-                                                $set('Amount', null);
-                                                $set('Duration', null);
-                                                return;
-                                            }
+                                        TextInput::make('MedicineFormName')
+                                            ->datalist($globalMedicineForms),
 
-                                            // If no medicine is selected, stop here
-                                            if (!$state) {
-                                                return;
-                                            }
+                                        TextInput::make('Dose'),
 
-                                            // 3. Find the first matching DiseaseTypeMedicine
-                                            // We load relationships to get the Names for the text inputs
-                                            $dtMedicine = DiseaseTypeMedicine::query()
-                                                ->where('MedicineId', $state)
-                                                ->with(['timeOfAdministration', 'anupana', 'medicine.medicineForm'])
-                                                ->first();
+                                        TextInput::make('TimeOfAdministration')
+                                            ->datalist($globalTimeOfAdministrations),
 
-                                            if ($dtMedicine) {
-                                                // 4. Update the fields using $set('field_name', value)
+                                        TextInput::make('Anupana')
+                                            ->datalist($globalAnupanas),
+                                        TextInput::make('Duration'),
 
-                                                // Assuming 'Dose' exists on DiseaseTypeMedicine
-                                                if (isset($dtMedicine->Dose)) {
-                                                    $set('Dose', $dtMedicine->Dose);
-                                                }
-
-                                                if (isset($dtMedicine->Duration)) {
-                                                    $set('Duration', $dtMedicine->Duration);
-                                                }
-
-                                                // For TextInput with datalist, we typically set the Name string
-                                                if ($dtMedicine->timeOfAdministration) {
-                                                    $set('TimeOfAdministration', $dtMedicine->timeOfAdministration->Name);
-                                                }
-
-                                                if ($dtMedicine->anupana) {
-                                                    $set('Anupana', $dtMedicine->anupana->Name);
-                                                }
-
-                                                // Assuming 'Amount' exists on DiseaseTypeMedicine
-                                                if (isset($dtMedicine->Amount)) {
-                                                    $set('Amount', $dtMedicine->Amount);
-                                                }
-
-                                                // For MedicineFormName, usually this is on the Medicine model itself?
-                                                // Adjust this path based on where 'Form' information is actually stored.
-                                                // Example: $dtMedicine->medicine->FormName
-                                                if ($dtMedicine->medicine && isset($dtMedicine->medicine->medicineForm->Name)) {
-                                                    $set('MedicineFormName', $dtMedicine->medicine->medicineForm->Name);
-                                                }
-                                            }
-                                        }),
-
-                                    TextInput::make('MedicineFormName')
-                                        ->datalist(fn() => MedicineForm::query()->pluck('Name')),
-
-                                    TextInput::make('Dose'),
-
-                                    TextInput::make('TimeOfAdministration')
-                                        ->datalist(fn() => TimeOfAdministration::query()->pluck('Name')), // Datalist usually expects simple array of strings
-
-                                    TextInput::make('Anupana')
-                                        ->datalist(fn() => Anupana::query()->pluck('Name')),
-                                    TextInput::make('Duration'),
-
-                                    TextInput::make('Amount')
-                                        ->extraAttributes(['class' => 'medicine-amount'])
-                                        ->afterStateUpdatedJs(<<<'JS'
+                                        TextInput::make('Amount')
+                                            ->extraAttributes(['class' => 'medicine-amount'])
+                                            ->afterStateUpdatedJs(<<<'JS'
         let prescriptions = $get('../')
         let total = Object.values(prescriptions).reduce((acc, curr) => {
         return acc + (+curr.Amount || 0);
         }, 0);
         $set('../../MedicinesFee', total)
         JS
-                                        )
-                                        ->numeric(),
-                                ])
-                                ->compact()
-                                ->columnSpanFull()
-                                ->cloneable(),
+                                            )
+                                            ->numeric(),
+                                    ])
+                                    ->compact()
+                                    ->columnSpanFull()
+                                    ->cloneable(),
 
-                            TextInput::make('ConsultationFee')
-                                ->required()
-                                ->numeric(),
-                            TextInput::make('MedicinesFee')
-                                ->id('medicine-fee')
-                                ->required()
-                                ->numeric(),
+                                TextInput::make('ConsultationFee')
+                                    ->required()
+                                    ->numeric(),
+                                TextInput::make('MedicinesFee')
+                                    ->id('medicine-fee')
+                                    ->required()
+                                    ->numeric(),
 
-                            DateTimePicker::make('NextAppointmentDate'),
-                            Textarea::make('Remark')
-                                ->columnSpanFull(),
-                            Textarea::make('Note')
-                                ->columnSpanFull(),
-                        ])->columns(3),
-                    Tabs\Tab::make("Vital")->schema([
-                        Fieldset::make("Vitals")
-                            ->relationship("vital")
-                            ->schema([
-                                TextInput::make("BodyTemperature")->default(''),
-                                TextInput::make("PluseRate")->label('PulseRate')->default(''),
-                                TextInput::make("RespirationRate")->default(''),
-                                TextInput::make("BloodPressure")->default(''),
-                                TextInput::make("Spo2")->default(''),
-                                TextInput::make("DiabetesCount")->default(''),
-                            ]),
-                    ]),
+                                DateTimePicker::make('NextAppointmentDate'),
+                                Textarea::make('Remark')
+                                    ->columnSpanFull(),
+                                Textarea::make('Note')
+                                    ->columnSpanFull(),
+                            ];
+                        })->columns(3),
                     Tabs\Tab::make("Gynec History")->schema([
                         Fieldset::make("Gynec History")
                             ->relationship("womenHistory")
@@ -456,6 +547,29 @@ class PatientHistoryForm
 
                 ])->columnSpanFull()
             ]);
+    }
+
+    protected static function getDiseaseTypesData($diseaseIds): array
+    {
+        if (empty($diseaseIds)) {
+            return [];
+        }
+
+        $diseaseTypes = DiseaseType::query()->with(['symptoms' => function ($q) {
+            $q->select('Symptoms.Id', 'Symptoms.Name', 'Symptoms.NameEnglish', 'Symptoms.NameGujarati');
+        }])->whereIn('diseaseId', $diseaseIds)
+            ->get();
+
+
+        return $diseaseTypes->map(function ($type) {
+            return [
+                'type_id' => $type->Id,
+                'type_name' => $type->Name ?? 'Unknown Type',
+                'description' => $type->Description ?? 'Kaboom',
+                'disease' => $type->Disease->Name ?? "",
+                'symptoms_options' => $type->symptoms->select('Name', 'NameEnglish', 'NameGujarati', 'Id')->toArray(),
+            ];
+        })->toArray();
     }
 
     public static function rogaPariska()

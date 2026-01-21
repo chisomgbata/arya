@@ -16,7 +16,7 @@ class HetuPariksa extends Model
     protected $table = 'HetuPariksas';
 
     protected $attributes = [
-        'DeletedBy' => '',
+        'DeletedBy' => '0000-0000-0000-0000',
         'IsDeleted' => false,
     ];
 

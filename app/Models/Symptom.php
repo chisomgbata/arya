@@ -17,6 +17,11 @@ class Symptom extends Model
         return $this->belongsToMany(Disease::class, 'DiseaseSymptoms', 'SymptomId', 'DiseaseId')->withPivot('IsMain');
     }
 
+    public function diseaseTypes(): BelongsToMany
+    {
+        return $this->belongsToMany(DiseaseType::class, 'DiseaseTypeSymptoms', 'SymptomId', 'DiseaseTypeId')->withPivot('IsMain');
+    }
+
     protected function casts(): array
     {
         return [

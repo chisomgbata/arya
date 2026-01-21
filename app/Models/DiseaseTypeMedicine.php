@@ -12,6 +12,11 @@ class DiseaseTypeMedicine extends Model
 
     protected $table = 'DiseaseTypeMedicines';
 
+    protected $attributes = [
+        'DeletedBy' => '',
+        'IsDeleted' => false
+    ];
+
     public function diseaseType(): BelongsTo
     {
         return $this->belongsTo(DiseaseType::class, 'DiseaseTypeId');

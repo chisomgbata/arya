@@ -25,7 +25,13 @@ class DiseaseType extends Model
 
     public function medicines(): BelongsToMany
     {
-        return $this->belongsToMany(Medicine::class, 'DiseaseTypeMedicines', 'DiseaseTypeId', 'MedicineId');
+        return $this->belongsToMany(
+            Medicine::class, 'DiseaseTypeMedicines', 'DiseaseTypeId', 'MedicineId')
+            ->where(fn($query) => $query->where('Medicines.IsSpecial', false)->orWhere('Medicines.CreatedBy', auth()->user()->Id))->withPivot([
+                'Dose',
+                
+            ]);
+
     }
 
     protected function casts(): array

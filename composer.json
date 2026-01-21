@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.4",
         "ext-pdo": "*",
+        "afatmustafa/blade-hugeicons": "^1.0",
         "emmanpbarrameda/filament-take-picture-field": "^1.2.1",
         "filament/filament": "^4.0",
         "guava/calendar": "^2.1",

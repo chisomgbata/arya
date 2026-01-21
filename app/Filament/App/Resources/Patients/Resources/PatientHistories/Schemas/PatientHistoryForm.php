@@ -230,7 +230,6 @@ class PatientHistoryForm
                                                     $fields = collect($data['Medicines'])->where('Selected', true)->toArray();
                                                     $value = array_map(fn($field) => [
                                                         Str::uuid()->toString() => [
-                                                            'MedicineName' => $field['MedicineName'] ?? '',
                                                             'MedicineId' => $field['MedicineId'] ?? '',
                                                             'MedicineFormName' => $field['MedicineFormName'] ?? '',
                                                             'Anupana' => $field['Anupana'] ?? '',
@@ -240,15 +239,10 @@ class PatientHistoryForm
                                                             'Amount' => 0,
                                                         ]
                                                     ], $fields);
-                                                    if (empty($get('Prescription'))) {
-                                                        $set('Prescriptions', ...$value);
-                                                    } else {
-                                                        $set('Prescriptions', array_merge($get('Prescriptions'),
-                                                                ...$value)
-                                                        );
 
-                                                    }
-
+                                                    $set('Prescriptions', array_filter(array_merge($get('Prescriptions'),
+                                                            ...$value))
+                                                    );
                                                 })
                                         ])->columnSpan(1),
                                         Actions::make([
@@ -288,8 +282,7 @@ class PatientHistoryForm
                                     ])
                                     ->schema([
                                         Hidden::make('MedicineId'),
-                                        Hidden::make('MedicineName'),
-                                        Placeholder::make('MedicineName'),
+                                        Placeholder::make('MedicineName')->content(fn(Get $get) => Medicine::where('Id', $get('MedicineId'))?->select('Name')->first()->Name),
 
                                         TextInput::make('MedicineFormName')
                                             ->datalist($globalMedicineForms),

@@ -19,6 +19,11 @@ class PatientHistory extends Model implements Eventable
 
     protected $table = 'PatientHistories';
 
+    protected $attributes = [
+        'ConsultationFee' => 0.0,
+        'MedicinesFee' => 0.0,
+    ];
+
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class, 'PatientId');

@@ -240,9 +240,14 @@ class PatientHistoryForm
                                                             'MedicineName' => $field['MedicineName'] ?? ''
                                                         ]
                                                     ], $fields);
-                                                    $set('Prescriptions', array_merge($get('Prescriptions'),
-                                                            ...$value)
-                                                    );
+                                                    if (empty($get('Prescription'))) {
+                                                        $set('Prescriptions', $value);
+                                                    } else {
+                                                        $set('Prescriptions', array_merge($get('Prescriptions'),
+                                                                ...$value)
+                                                        );
+
+                                                    }
 
                                                 })
                                         ])->columnSpan(1),
@@ -272,7 +277,6 @@ class PatientHistoryForm
                                 Repeater::make('Prescriptions')
                                     ->relationship('prescriptions')
                                     ->table([
-                                        Repeater\TableColumn::make('Medicine'),
                                         Repeater\TableColumn::make('MedicineFormName'),
                                         Repeater\TableColumn::make('Dose'),
                                         Repeater\TableColumn::make('TimeOfAdministration'),

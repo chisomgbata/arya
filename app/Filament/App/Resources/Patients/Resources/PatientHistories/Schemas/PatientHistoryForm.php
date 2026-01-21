@@ -241,7 +241,7 @@ class PatientHistoryForm
                                                         ]
                                                     ], $fields);
                                                     if (empty($get('Prescription'))) {
-                                                        $set('Prescriptions', $value);
+                                                        $set('Prescriptions', ...$value);
                                                     } else {
                                                         $set('Prescriptions', array_merge($get('Prescriptions'),
                                                                 ...$value)

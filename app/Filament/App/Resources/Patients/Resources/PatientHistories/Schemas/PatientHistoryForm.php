@@ -282,7 +282,7 @@ class PatientHistoryForm
                                     ])
                                     ->schema([
                                         Hidden::make('MedicineId'),
-                                        Placeholder::make('MedicineName')->content(fn(Get $get) => Medicine::where('Id', $get('MedicineId'))?->select('Name')->first()->Name),
+                                        Placeholder::make('MedicineName')->content(fn(Get $get) => Medicine::where('Id', $get('MedicineId'))?->select('Name')->first()?->Name ?? ''),
 
                                         TextInput::make('MedicineFormName')
                                             ->datalist($globalMedicineForms),

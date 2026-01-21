@@ -314,11 +314,9 @@ class PatientHistoryForm
                                     ->cloneable(),
 
                                 TextInput::make('ConsultationFee')
-                                    ->required()
                                     ->numeric(),
                                 TextInput::make('MedicinesFee')
                                     ->id('medicine-fee')
-                                    ->required()
                                     ->numeric(),
 
                                 DateTimePicker::make('NextAppointmentDate'),

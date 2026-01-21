@@ -230,6 +230,7 @@ class PatientHistoryForm
                                                     $fields = collect($data['Medicines'])->where('Selected', true)->toArray();
                                                     $value = array_map(fn($field) => [
                                                         Str::uuid()->toString() => [
+                                                            'MedicineName' => $field['MedicineName'] ?? '',
                                                             'MedicineId' => $field['MedicineId'] ?? '',
                                                             'MedicineFormName' => $field['MedicineFormName'] ?? '',
                                                             'Anupana' => $field['Anupana'] ?? '',
@@ -237,7 +238,6 @@ class PatientHistoryForm
                                                             'TimeOfAdministration' => $field['TimeOfAdministration'] ?? '',
                                                             'Duration' => $field['Duration'] ?? '',
                                                             'Amount' => 0,
-                                                            'MedicineName' => $field['MedicineName'] ?? ''
                                                         ]
                                                     ], $fields);
                                                     if (empty($get('Prescription'))) {
@@ -277,6 +277,8 @@ class PatientHistoryForm
                                 Repeater::make('Prescriptions')
                                     ->relationship('prescriptions')
                                     ->table([
+
+                                        Repeater\TableColumn::make('MedicineName'),
                                         Repeater\TableColumn::make('MedicineFormName'),
                                         Repeater\TableColumn::make('Dose'),
                                         Repeater\TableColumn::make('TimeOfAdministration'),

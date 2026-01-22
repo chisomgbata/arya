@@ -115,6 +115,7 @@ class PatientHistory extends Model implements Eventable
             'IsVital' => 'boolean',
             'IsWomenHistory' => 'boolean',
             'IsImages' => 'boolean',
+            'NextAppointmentDate' => 'datetime'
         ];
     }
 }

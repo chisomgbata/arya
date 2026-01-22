@@ -72,7 +72,6 @@ class PatientHistoriesTable
                     ->action(function (PatientHistory $record) {
                         $newHistory = DB::transaction(function () use ($record) {
                             $newHistory = $record->replicate(['prescriptions_count']);
-                            // Optional: Reset dates on copy if needed?
                             $newHistory->CreatedDate = now();
                             $newHistory->save();
 

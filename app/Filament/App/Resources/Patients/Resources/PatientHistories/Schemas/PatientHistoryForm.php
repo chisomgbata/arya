@@ -44,7 +44,7 @@ class PatientHistoryForm
                     Tabs\Tab::make('Info')
                         ->schema(function () {
                             $globalAnupanas = Anupana::query()->pluck('Name', 'Id');
-                            $globalTimeOfAdministrations = TimeOfAdministration::query()->pluck('Name', 'Id');
+                            $globalTimeOfAdministrations = TimeOfAdministration::query()->pluck('NameGujarati', 'Id');
                             $globalMedicineForms = MedicineForm::query()->pluck('Name', 'Id');
                             return [
 
@@ -326,6 +326,18 @@ class PatientHistoryForm
                                     ->columnSpanFull(),
                             ];
                         })->columns(3),
+                    Tabs\Tab::make("Vital")->schema([
+                        Fieldset::make("Vitals")
+                            ->relationship("vital")
+                            ->schema([
+                                TextInput::make("BodyTemperature")->default(''),
+                                TextInput::make("PluseRate")->label('PulseRate')->default(''),
+                                TextInput::make("RespirationRate")->default(''),
+                                TextInput::make("BloodPressure")->default(''),
+                                TextInput::make("Spo2")->default(''),
+                                TextInput::make("DiabetesCount")->default(''),
+                            ]),
+                    ]),
                     Tabs\Tab::make("Gynec History")->schema([
                         Fieldset::make("Gynec History")
                             ->relationship("womenHistory")

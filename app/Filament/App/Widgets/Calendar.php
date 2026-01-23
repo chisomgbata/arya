@@ -9,42 +9,25 @@ use Filament\Facades\Filament;
 use Guava\Calendar\Enums\CalendarViewType;
 use Guava\Calendar\Filament\CalendarWidget;
 use Guava\Calendar\ValueObjects\EventClickInfo;
+use Guava\Calendar\ValueObjects\FetchInfo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class Calendar extends CalendarWidget
 {
     protected CalendarViewType $calendarView = CalendarViewType::DayGridMonth;
 
     protected bool $eventClickEnabled = true;
+    protected bool $dateClickEnabled = true;
 
-    /**
-     * fetch events from the database
-     */
-    public function getEvents($info): Builder
-    {
-
-        return PatientHistory::query()
-            ->where('DoctorId', Filament::getTenant()->Id)
-            ->with('patient')
-            ->whereNotNull('NextAppointmentDate')
-            ->where('NextAppointmentDate', '>=', $info->start)
-            ->where('NextAppointmentDate', '<=', $info->end);
-    }
 
     public function visitPatientAction(): Action
     {
         return Action::make('visitPatient')
             ->model(PatientHistory::class)
             ->action(function (PatientHistory $record) {
-                // Get the tenant associated with this record
-                // (Assuming Patient belongsTo Tenant, or you use the current tenant)
                 $tenant = Filament::getTenant();
-
-                // If you need to link to a record belonging to a specific tenant
-                // (e.g., if you are viewing a global calendar):
-                // $tenant = $record->patient->tenant;
-
                 return redirect()->to(
                     PatientResource::getUrl(
                         name: 'edit',
@@ -57,8 +40,12 @@ class Calendar extends CalendarWidget
 
     protected function onEventClick(EventClickInfo $info, Model $event, ?string $action = null): void
     {
-        // Validate the data and handle the event click
-        // $event contains the clicked event record
-        // you can also access it via $info->record
+        $this->mountAction('visitPatient');
+
+    }
+
+    protected function getEvents(FetchInfo $info): Collection|array|Builder
+    {
+        return [];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Filament\App\Pages;
 
 use App\Filament\App\Widgets\Calendar;
+use App\Filament\App\Widgets\ClientAppointments;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -15,6 +16,7 @@ class Appointments extends Page
     public function getHeaderWidgets(): array
     {
         return [
+            ClientAppointments::class,
             Calendar::class
         ];
     }

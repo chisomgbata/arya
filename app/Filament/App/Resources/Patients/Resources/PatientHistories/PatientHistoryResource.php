@@ -25,6 +25,7 @@ class PatientHistoryResource extends Resource
 
     protected static ?string $parentResource = PatientResource::class;
 
+
     public static function form(Schema $schema): Schema
     {
         return PatientHistoryForm::configure($schema);

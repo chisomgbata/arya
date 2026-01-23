@@ -29,9 +29,6 @@ Route::get('/patient-files/{record}', function (PatientFile $record) {
         abort(404);
     }
 
-    // 3. Return the file
-    // Use 'response($path)' to view in browser (images)
-    // Use 'download($path)' to force download
     return Storage::disk('local')->response($path);
 
 

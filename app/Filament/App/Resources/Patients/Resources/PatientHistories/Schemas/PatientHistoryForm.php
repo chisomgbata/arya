@@ -43,7 +43,7 @@ class PatientHistoryForm
                 Tabs::make('Tabs')->schema([
                     Tabs\Tab::make('Info')
                         ->schema(function () {
-                            $globalAnupanas = Anupana::query()->pluck('Name', 'Id');
+                            $globalAnupanas = Anupana::query()->pluck('NameGujarati', 'Id');
                             $globalTimeOfAdministrations = TimeOfAdministration::query()->pluck('NameGujarati', 'Id');
                             $globalMedicineForms = MedicineForm::query()->pluck('Name', 'Id');
                             return [
@@ -208,8 +208,8 @@ class PatientHistoryForm
                                                                 ->with([
                                                                     'medicine' => fn($q) => $q->select(['Id', 'Name', 'MedicineFormId']),
                                                                     'medicine.medicineForm' => fn($q) => $q->select(['Id', 'Name']),
-                                                                    'timeOfAdministration' => fn($q) => $q->select(['Id', 'Name']),
-                                                                    'anupana' => fn($q) => $q->select(['Id', 'Name']),
+                                                                    'timeOfAdministration' => fn($q) => $q->select(['Id', 'NameGujarati']),
+                                                                    'anupana' => fn($q) => $q->select(['Id', 'NameGujarati']),
 
                                                                 ])
                                                                 ->select(['Id', 'MedicineId', 'Dose', 'Duration', 'TimeOfAdministrationId', 'AnupanaId'])
@@ -219,8 +219,8 @@ class PatientHistoryForm
                                                                     'MedicineName' => $item->medicine?->Name,
                                                                     'MedicineFormName' => $item->medicine?->medicineForm?->Name,
                                                                     'Dose' => $item->Dose,
-                                                                    'TimeOfAdministration' => $item->timeOfAdministration?->Name,
-                                                                    'Anupana' => $item->anupana?->Name,
+                                                                    'TimeOfAdministration' => $item->timeOfAdministration?->NameGujarati,
+                                                                    'Anupana' => $item->anupana?->NameGujarati,
                                                                     'Duration' => $item->Duration,
                                                                 ])
                                                                 ->toArray();

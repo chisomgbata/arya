@@ -76,8 +76,8 @@
     <!-- Footer Section -->
     <div class="footer">
         <div class="follow-up">
-            <p><strong>Follow-up Date:</strong> ____________________</p>
-            <p class="gujarati-text">ફરી બતાવવાની તારીખ: ____________________</p>
+            <p><strong>Follow-up Date:</strong> <u>{{$history->NextAppointmentDate?->format('d-m-Y')}}</u></p>
+            <p class="gujarati-text">ફરી બતાવવાની તારીખ: <u>{{$history->NextAppointmentDate?->format('d-m-Y')}}</u></p>
         </div>
         <div class="signature">
             <br><br>

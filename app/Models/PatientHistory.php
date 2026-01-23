@@ -100,7 +100,8 @@ class PatientHistory extends Model implements Eventable
             ->title($this->patient
                 ? "{$this->patient->FirstName} {$this->patient->LastName}"
                 : 'Unknown Patient')
-            ->action('visitPatient')
+            ->action('edit')
+            ->allDay()
             ->start($this->NextAppointmentDate)
             ->end($this->NextAppointmentDate);
     }

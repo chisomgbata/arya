@@ -72,9 +72,9 @@ class MedicineResource extends Resource
                 return $query->where("ClinicId", Filament::getTenant()->Id);
             })
             ->columns([
-                TextColumn::make("Name"),
+                TextColumn::make("Name")->searchable(),
 
-                TextColumn::make("CompanyName"),
+                TextColumn::make("CompanyName")->searchable(),
 
                 TextColumn::make("medicineForm.Name"),
 

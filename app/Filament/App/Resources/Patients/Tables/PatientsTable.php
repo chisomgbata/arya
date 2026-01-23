@@ -10,6 +10,7 @@ use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 class PatientsTable
@@ -65,6 +66,7 @@ class PatientsTable
             ->recordActions([
                 EditAction::make(),
             ])
+            ->modifyQueryUsing(fn(Builder $query) => $query->orderByDesc('CreatedDate'))
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

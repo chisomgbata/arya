@@ -10,7 +10,6 @@ use Filament\Resources\Pages\CreateRecord;
 class CreatePatient extends CreateRecord
 {
     protected static string $resource = PatientResource::class;
-    protected static bool $canCreateAnother = false;
 
     protected function getCreateFormAction(): Action
     {

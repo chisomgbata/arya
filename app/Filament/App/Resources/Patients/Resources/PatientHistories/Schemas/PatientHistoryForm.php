@@ -43,8 +43,8 @@ class PatientHistoryForm
                 Tabs::make('Tabs')->schema([
                     Tabs\Tab::make('Info')
                         ->schema(function () {
-                            $globalAnupanas = Anupana::query()->pluck('NameGujarati', 'Id');
-                            $globalTimeOfAdministrations = TimeOfAdministration::query()->pluck('NameGujarati', 'Id');
+                            $globalAnupanas = Anupana::query()->whereNotNull('NameGujarati')->pluck('NameGujarati', 'Id');
+                            $globalTimeOfAdministrations = TimeOfAdministration::query()->whereNotNull('NameGujarati')->pluck('NameGujarati', 'Id');
                             $globalMedicineForms = MedicineForm::query()->pluck('Name', 'Id');
                             return [
 

@@ -9,6 +9,7 @@ trait AuditFields
 {
     use  SoftDeletes;
 
+
     /**
      * Boot the trait.
      * This registers the Model Events automatically.
@@ -35,7 +36,6 @@ trait AuditFields
             }
         });
 
-        // 3. On Soft Delete
         static::deleted(function ($model) {
             // Laravel has already set 'DeletedDate'.
             // We now sync the legacy fields.
@@ -47,20 +47,24 @@ trait AuditFields
 
         // 4. On Restore
         static::restored(function ($model) {
-            $model->DeletedBy = null;
+            $model->DeletedBy = "00000000-0000-0000-0000-000000000000";
             $model->saveQuietly();
         });
     }
 
-    /**
-     * Initialize the trait.
-     * This runs when the model is instantiated, setting up keys and config.
-     */
+
     public function initializeAuditFields(): void
     {
         $this->primaryKey = 'Id';
-
         $this->timestamps = true;
+
+        if (!array_key_exists('DeletedBy', $this->attributes)) {
+            $this->attributes['DeletedBy'] = "00000000-0000-0000-0000-000000000000";
+        }
+
+        if (!array_key_exists('IsDeleted', $this->attributes)) {
+            $this->attributes['IsDeleted'] = false;
+        }
     }
 
     /**

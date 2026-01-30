@@ -12,19 +12,16 @@ class PatientPrakruti extends Model
     use AuditFields, HasUuids;
 
     protected $table = 'PatientPrakrutis';
-    protected $attributes = [
-        'isDeleted' => false
-    ];
 
-    public function patient(): BelongsTo
+    public function patient(): belongsto
     {
-        return $this->belongsTo(Patient::class, 'PatientId');
+        return $this->belongsto(patient::class, 'patientid');
     }
 
     protected function casts(): array
     {
         return [
-            'IsDeleted' => 'boolean',
+            'isdeleted' => 'boolean',
         ];
     }
 }

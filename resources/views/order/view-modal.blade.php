@@ -213,7 +213,7 @@
         <!-- Footer Section -->
         <div class="modal-footer">
             <div class="modal-follow-up">
-                <p><strong>Follow-up Date:</strong> <u>{{ $history->NextAppointmentDate?->format('d-m-Y') ?? 'Not scheduled' }}</u></p>
+               
                 <p class="gujarati-text">ફરી બતાવવાની તારીખ: <u>{{ $history->NextAppointmentDate?->format('d-m-Y') ?? 'નક્કી નથી' }}</u></p>
             </div>
         </div>

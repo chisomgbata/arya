@@ -10,10 +10,13 @@ use App\Models\Medicine;
 use App\Models\MedicineForm;
 use App\Models\Panchakarma;
 use App\Models\TimeOfAdministration;
+use emmanpbarrameda\FilamentTakePictureField\Forms\Components\TakePicture;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Radio;
@@ -33,6 +36,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
 use Illuminate\Support\Str;
+use Saade\FilamentAutograph\Forms\Components\SignaturePad;
 
 class PatientHistoryForm
 {
@@ -46,15 +50,16 @@ class PatientHistoryForm
                             $globalAnupanas = Anupana::query()->whereNotNull('NameGujarati')->pluck('NameGujarati', 'Id');
                             $globalTimeOfAdministrations = TimeOfAdministration::query()->whereNotNull('NameGujarati')->pluck('NameGujarati', 'Id');
                             $globalMedicineForms = MedicineForm::query()->pluck('Name', 'Id');
+
                             return [
 
-                                Select::make("diseases")
+                                Select::make('diseases')
                                     ->columnSpanFull()
                                     ->multiple()
                                     ->relationship(
-                                        name: "diseases",
-                                        titleAttribute: "Name",
-                                        modifyQueryUsing: fn($query) => $query->select(['Diseases.Id', 'Diseases.Name'])
+                                        name: 'diseases',
+                                        titleAttribute: 'Name',
+                                        modifyQueryUsing: fn ($query) => $query->select(['Diseases.Id', 'Diseases.Name'])
                                     )
                                     ->preload()
                                     ->searchable()
@@ -63,8 +68,7 @@ class PatientHistoryForm
                                         $data = self::getDiseaseTypesData($state);
                                         $set('diseases_types_display', $data);
                                         $set('symptoms', []);
-                                    })
-                                ,
+                                    }),
 
                                 Placeholder::make('disease_information_display')
                                     ->hiddenLabel()
@@ -81,17 +85,16 @@ class PatientHistoryForm
                                     })
                                     ->columnSpanFull(),
 
-                                Select::make("symptoms")
+                                Select::make('symptoms')
                                     ->multiple()
-                                    ->relationship("symptoms", "Name", modifyQueryUsing: fn($query, Get $get) => $query
-                                        ->whereHas('diseaseTypes', fn($q) => $q->whereIn('diseaseId', $get('diseases'))
+                                    ->relationship('symptoms', 'Name', modifyQueryUsing: fn ($query, Get $get) => $query
+                                        ->whereHas('diseaseTypes', fn ($q) => $q->whereIn('diseaseId', $get('diseases'))
                                         )
                                         ->distinct()
                                         ->select(['Symptoms.Id', 'Symptoms.Name'])
                                     )
                                     ->columnSpan(2)
-                                    ->preload()
-                                ,
+                                    ->preload(),
                                 Select::make('modern_symptoms')
                                     ->relationship('modernSymptoms', 'Name')
                                     ->multiple()
@@ -100,9 +103,7 @@ class PatientHistoryForm
                                     ->createOptionForm([
                                         TextInput::make('Name')->required(),
                                         Textarea::make('Description'),
-                                    ])->createOptionUsing(function () {
-
-                                    }),
+                                    ])->createOptionUsing(function () {}),
                                 Repeater::make('diseases_types_display')
                                     ->hiddenLabel()
                                     ->dehydrated(false)
@@ -121,11 +122,11 @@ class PatientHistoryForm
                                     ])
                                     ->afterStateHydrated(function (Get $get, Set $set) {
                                         $diseases = $get('diseases');
-                                        if (!empty($diseases)) {
+                                        if (! empty($diseases)) {
                                             $set('diseases_types_display', self::getDiseaseTypesData($diseases));
                                         }
                                     })
-                                    ->schema(fn(Get $get, Set $set) => [
+                                    ->schema(fn (Get $get, Set $set) => [
                                         Hidden::make('type_name'),
                                         Hidden::make('description'),
                                         Placeholder::make('disease')
@@ -136,7 +137,7 @@ class PatientHistoryForm
                                                 ->icon('hugeicons-medicine-02')
                                                 ->color('primary')
                                                 ->modal()
-                                                ->schema(fn(Get $get) => [
+                                                ->schema(fn (Get $get) => [
                                                     Repeater::make('Medicines')
                                                         ->deletable(false)
                                                         ->addable(false)
@@ -144,9 +145,9 @@ class PatientHistoryForm
                                                         ->reorderable(false)
                                                         ->hintActions([
                                                             Action::make('add_medicine')
-                                                                ->modalHeading(fn() => 'Add Medicine For ' . $get('disease') . ' : ' . $get('type_name'))
+                                                                ->modalHeading(fn () => 'Add Medicine For '.$get('disease').' : '.$get('type_name'))
                                                                 ->schema([
-                                                                    Hidden::make('DiseaseTypeId')->default(fn() => $get('type_id')),
+                                                                    Hidden::make('DiseaseTypeId')->default(fn () => $get('type_id')),
                                                                     Hidden::make('IsSpecial')->default(true),
                                                                     Select::make('MedicineId')->label('Medicine')->searchable()->options(function ($query) {
                                                                         return Medicine::query()->pluck('Name', 'Id');
@@ -166,7 +167,7 @@ class PatientHistoryForm
                                                                     TextInput::make('Duration')->required(),
                                                                 ])->action(function ($data) {
                                                                     DiseaseTypeMedicine::create($data);
-                                                                })->button()
+                                                                })->button(),
                                                         ])
                                                         ->table([
                                                             Repeater\TableColumn::make('Select'),
@@ -183,8 +184,7 @@ class PatientHistoryForm
                                                                 Hidden::make('MedicineId'),
                                                                 Hidden::make('MedicineName'),
                                                                 Placeholder::make('MedicineName')
-                                                                    ->label('Name')
-                                                                ,
+                                                                    ->label('Name'),
 
                                                                 TextInput::make('MedicineFormName')
                                                                     ->label('Medicine Form')
@@ -204,17 +204,17 @@ class PatientHistoryForm
                                                         ->default(function () use ($get) {
                                                             return DiseaseTypeMedicine::query()
                                                                 ->where('DiseaseTypeId', $get('type_id'))
-                                                                ->where(fn($query) => $query->where('IsSpecial', false)->orWhere('CreatedBy', auth()->user()->Id))
+                                                                ->where(fn ($query) => $query->where('IsSpecial', false)->orWhere('CreatedBy', auth()->user()->Id))
                                                                 ->with([
-                                                                    'medicine' => fn($q) => $q->select(['Id', 'Name', 'MedicineFormId']),
-                                                                    'medicine.medicineForm' => fn($q) => $q->select(['Id', 'Name']),
-                                                                    'timeOfAdministration' => fn($q) => $q->select(['Id', 'NameGujarati']),
-                                                                    'anupana' => fn($q) => $q->select(['Id', 'NameGujarati']),
+                                                                    'medicine' => fn ($q) => $q->select(['Id', 'Name', 'MedicineFormId']),
+                                                                    'medicine.medicineForm' => fn ($q) => $q->select(['Id', 'Name']),
+                                                                    'timeOfAdministration' => fn ($q) => $q->select(['Id', 'NameGujarati']),
+                                                                    'anupana' => fn ($q) => $q->select(['Id', 'NameGujarati']),
 
                                                                 ])
                                                                 ->select(['Id', 'MedicineId', 'Dose', 'Duration', 'TimeOfAdministrationId', 'AnupanaId'])
                                                                 ->get()
-                                                                ->map(fn($item) => [
+                                                                ->map(fn ($item) => [
                                                                     'MedicineId' => $item->medicine?->Id,
                                                                     'MedicineName' => $item->medicine?->Name,
                                                                     'MedicineFormName' => $item->medicine?->medicineForm?->Name,
@@ -224,11 +224,11 @@ class PatientHistoryForm
                                                                     'Duration' => $item->Duration,
                                                                 ])
                                                                 ->toArray();
-                                                        })
+                                                        }),
                                                 ])->modalWidth(Width::SevenExtraLarge)
                                                 ->action(function ($data) use ($get, $set) {
                                                     $fields = collect($data['Medicines'])->where('Selected', true)->toArray();
-                                                    $value = array_map(fn($field) => [
+                                                    $value = array_map(fn ($field) => [
                                                         Str::uuid()->toString() => [
                                                             'MedicineId' => $field['MedicineId'] ?? '',
                                                             'MedicineFormName' => $field['MedicineFormName'] ?? '',
@@ -237,36 +237,34 @@ class PatientHistoryForm
                                                             'TimeOfAdministration' => $field['TimeOfAdministration'] ?? '',
                                                             'Duration' => $field['Duration'] ?? '',
                                                             'Amount' => 0,
-                                                        ]
+                                                        ],
                                                     ], $fields);
 
                                                     $set('Prescriptions', array_filter(array_merge($get('Prescriptions'),
-                                                            ...$value))
+                                                        ...$value))
                                                     );
-                                                })
+                                                }),
                                         ])->columnSpan(1),
                                         Actions::make([
                                             Action::make('disease_type_detail')
-                                                ->label(fn(Get $get) => $get('type_name')) // Dynamically fetch the text
+                                                ->label(fn (Get $get) => $get('type_name')) // Dynamically fetch the text
                                                 ->link()
                                                 ->modal()
                                                 ->modalSubmitAction(false)
                                                 ->modalCancelAction(false)
                                                 ->schema([
                                                     Placeholder::make('description')
-                                                        ->hiddenLabel()
+                                                        ->hiddenLabel(),
                                                 ]),
                                         ])->columnSpan(1),
 
                                         ViewField::make('symptoms_ui')->hiddenLabel() // Name doesn't matter, it doesn't save data
-                                        ->view('checkboxes')
-                                            ->columnSpan(6)
-                                        ,
+                                            ->view('checkboxes')
+                                            ->columnSpan(6),
 
                                         Hidden::make('type_id'),
 
                                     ]),
-
 
                                 Repeater::make('Prescriptions')
                                     ->relationship('prescriptions')
@@ -282,7 +280,7 @@ class PatientHistoryForm
                                     ])
                                     ->schema([
                                         Hidden::make('MedicineId'),
-                                        Placeholder::make('MedicineName')->content(fn(Get $get) => Medicine::where('Id', $get('MedicineId'))?->select('Name')->first()?->Name ?? ''),
+                                        Placeholder::make('MedicineName')->content(fn (Get $get) => Medicine::where('Id', $get('MedicineId'))?->select('Name')->first()?->Name ?? ''),
 
                                         TextInput::make('MedicineFormName')
                                             ->datalist($globalMedicineForms),
@@ -326,21 +324,21 @@ class PatientHistoryForm
                                     ->columnSpanFull(),
                             ];
                         })->columns(3),
-                    Tabs\Tab::make("Vital")->schema([
-                        Fieldset::make("Vitals")
-                            ->relationship("vital")
+                    Tabs\Tab::make('Vital')->schema([
+                        Fieldset::make('Vitals')
+                            ->relationship('vital')
                             ->schema([
-                                TextInput::make("BodyTemperature")->default(''),
-                                TextInput::make("PluseRate")->label('PulseRate')->default(''),
-                                TextInput::make("RespirationRate")->default(''),
-                                TextInput::make("BloodPressure")->default(''),
-                                TextInput::make("Spo2")->default(''),
-                                TextInput::make("DiabetesCount")->default(''),
+                                TextInput::make('BodyTemperature')->default(''),
+                                TextInput::make('PluseRate')->label('PulseRate')->default(''),
+                                TextInput::make('RespirationRate')->default(''),
+                                TextInput::make('BloodPressure')->default(''),
+                                TextInput::make('Spo2')->default(''),
+                                TextInput::make('DiabetesCount')->default(''),
                             ]),
                     ]),
-                    Tabs\Tab::make("Gynec History")->schema([
-                        Fieldset::make("Gynec History")
-                            ->relationship("womenHistory")
+                    Tabs\Tab::make('Gynec History')->schema([
+                        Fieldset::make('Gynec History')
+                            ->relationship('womenHistory')
                             ->schema([
                                 Section::make('General Assessment')
                                     ->schema([
@@ -499,7 +497,7 @@ class PatientHistoryForm
                                     ]),
                             ]),
                     ]),
-                    Tabs\Tab::make("Panchakarma")
+                    Tabs\Tab::make('Panchakarma')
                         ->schema(
                             [
                                 Repeater::make('panchakarmas')
@@ -509,7 +507,7 @@ class PatientHistoryForm
                                     ->deletable(false)
                                     ->table([
                                         Repeater\TableColumn::make('Panchakarma'),
-                                        Repeater\TableColumn::make('Detail')
+                                        Repeater\TableColumn::make('Detail'),
                                     ])
                                     ->reorderable(false) // Important to keep the list fixed
                                     ->schema([
@@ -545,17 +543,70 @@ class PatientHistoryForm
 
                                         // Force the repeater to use our merged list
                                         $component->state($items);
-                                    })
+                                    }),
                             ]
-                        )
-                    ,
+                        ),
                     self::rogaPariska(),
 
                     Tabs\Tab::make('HetuPariksa')->schema([
-                        HetuPariksaForm::configure($schema)
+                        HetuPariksaForm::configure($schema),
                     ]),
 
-                ])->columnSpanFull()
+                    Tabs\Tab::make('Patient Files')->schema([
+                        Repeater::make('patientFiles')
+                            ->relationship('patientFiles')
+                            ->label('Patient Files')
+                            ->schema([
+                                FileUpload::make('File')
+                                    ->preserveFilenames(true)
+                                    ->disk('local')
+                                    ->directory('patient-files/'.Filament::getTenant()?->Id)
+                                    ->visibility('private')
+                                    ->required()
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(1)
+                            ->columnSpanFull()
+                            ->cloneable()
+                            ->defaultItems(0),
+                    ]),
+
+                    Tabs\Tab::make('Sketches')->schema([
+                        Repeater::make('sketches')
+                            ->relationship('sketches')
+                            ->label('ScratchPad')
+                            ->schema([
+                                SignaturePad::make('sketch')
+                                    ->required()
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(1)
+                            ->columnSpanFull()
+                            ->cloneable()
+                            ->defaultItems(0),
+                    ]),
+
+                    Tabs\Tab::make('Captures')->schema([
+                        Repeater::make('captures')
+                            ->relationship('captures')
+                            ->label('Captures')
+                            ->schema([
+                                TakePicture::make('capture')
+                                    ->label('Capture')
+                                    ->disk('public')
+                                    ->visibility('public')
+                                    ->showCameraSelector()
+                                    ->aspect('16:9')
+                                    ->imageQuality(80)
+                                    ->shouldDeleteOnEdit(false),
+                            ])
+                            ->columns(1)
+                            ->columnSpanFull()
+                            ->cloneable()
+                            ->defaultItems(0),
+                    ]),
+
+                ])->columnSpanFull(),
             ]);
     }
 
@@ -570,13 +621,12 @@ class PatientHistoryForm
         }])->whereIn('diseaseId', $diseaseIds)
             ->get();
 
-
         return $diseaseTypes->map(function ($type) {
             return [
                 'type_id' => $type->Id,
                 'type_name' => $type->Name ?? 'Unknown Type',
                 'description' => $type->Description ?? 'Kaboom',
-                'disease' => $type->Disease->Name ?? "",
+                'disease' => $type->Disease->Name ?? '',
                 'symptoms_options' => $type->symptoms->select('Name', 'NameEnglish', 'NameGujarati', 'Id')->toArray(),
             ];
         })->toArray();
@@ -790,9 +840,8 @@ class PatientHistoryForm
                             ->label('Nidana (Detailed Etiology)')
                             ->rows(3),
                     ]),
-            ])->columns()
+            ])->columns(),
         ]);
 
     }
-
 }

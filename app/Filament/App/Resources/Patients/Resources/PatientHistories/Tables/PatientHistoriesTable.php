@@ -15,6 +15,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class PatientHistoriesTable
@@ -29,6 +30,11 @@ class PatientHistoriesTable
                     ->badge()
                     ->limitList(2)
                     ->separator(',')
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query
+                            ->whereHas('diseases', fn(Builder $q) => $q->where('Name', 'like', "%{$search}%"))
+                            ->orWhereHas('symptoms', fn(Builder $q) => $q->where('Name', 'like', "%{$search}%"));
+                    })
                     ->description(fn(PatientHistory $record) => "Symptoms: " . $record->symptoms->pluck('Name')->take(3)->implode(', ')
                     )
                     ->wrap(),

@@ -27,7 +27,8 @@ class Pharmarcy extends TableWidget
                     $query->select('PatientId', DB::raw('MAX(CreatedDate)'))
                         ->from('PatientHistories')
                         ->groupBy('PatientId');
-                }))
+                })
+                ->latest('CreatedDate'))
             ->columns([
                 TextColumn::make('patient')
                     ->label('Name')

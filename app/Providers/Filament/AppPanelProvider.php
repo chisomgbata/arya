@@ -11,6 +11,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -44,6 +45,13 @@ class AppPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\Filament\App\Widgets')
             ->widgets([
+            ])
+            ->navigationItems([
+                NavigationItem::make('Admin Panel')
+                    ->url('/admin')
+                    ->icon('heroicon-o-shield-check')
+                    ->openUrlInNewTab()
+                    ->sort(100),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth(Width::TwoExtraLarge->value)

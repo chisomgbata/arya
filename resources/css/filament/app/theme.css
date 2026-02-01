@@ -9,6 +9,16 @@
 @source '../../../../resources/views/**/*';
 @source '../../../../vendor/guava/calendar/resources/**/*';
 
+.no-history-row,
+.no-history-row td {
+    background-color: rgb(254 249 195) !important;
+}
+
+:is(.dark .no-history-row),
+:is(.dark .no-history-row) td {
+    background-color: rgb(113 63 18 / 0.15) !important;
+}
+
 canvas[x-ref="canvas"] {
     height: 42rem !important;
 }

@@ -66,7 +66,8 @@ class PatientsTable
             ->recordActions([
                 EditAction::make(),
             ])
-            ->modifyQueryUsing(fn(Builder $query) => $query->orderByDesc('CreatedDate'))
+            ->modifyQueryUsing(fn(Builder $query) => $query->withCount('patientHistories')->orderByDesc('CreatedDate'))
+            ->recordClasses(fn($record) => $record->patient_histories_count === 0 ? 'no-history-row' : null)
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

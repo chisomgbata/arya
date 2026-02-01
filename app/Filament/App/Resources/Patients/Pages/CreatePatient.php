@@ -6,10 +6,14 @@ use App\Filament\App\Resources\Patients\PatientResource;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
 
-
 class CreatePatient extends CreateRecord
 {
     protected static string $resource = PatientResource::class;
+
+    protected function getCreateAnotherFormAction(): Action
+    {
+        return parent::getCreateAnotherFormAction()->label('Add to Waiting List');
+    }
 
     protected function getCreateFormAction(): Action
     {

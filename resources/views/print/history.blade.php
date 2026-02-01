@@ -56,7 +56,7 @@
             <th>Medicine Name</th>
             <th>Dose</th>
             <th>Time of Administration</th>
-            <th>Duration</th>
+            <th>Quantity</th>
             <th>Anupana</th>
         </tr>
         </thead>

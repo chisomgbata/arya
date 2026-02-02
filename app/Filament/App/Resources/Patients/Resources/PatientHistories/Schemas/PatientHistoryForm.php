@@ -48,8 +48,9 @@ class PatientHistoryForm
             ->components([
                 Tabs::make('Tabs')->schema([
                     Tabs\Tab::make('Info')
-                        ->badge(fn (?PatientHistory $record) => $record?->prescriptions()->exists() ? '✓' : null)
-                        ->badgeColor('success')
+                        ->extraAttributes(fn (?PatientHistory $record) => $record?->prescriptions()->exists()
+                            ? ['style' => 'background-color: #fee2e2; border-radius: 0.5rem;']
+                            : [])
                         ->schema(function () {
                             $globalAnupanas = Anupana::query()->whereNotNull('NameGujarati')->pluck('NameGujarati', 'Id');
                             $globalTimeOfAdministrations = TimeOfAdministration::query()->whereNotNull('NameGujarati')->pluck('NameGujarati', 'Id');
@@ -329,8 +330,9 @@ class PatientHistoryForm
                             ];
                         })->columns(3),
                     Tabs\Tab::make('Vital')
-                        ->badge(fn (?PatientHistory $record) => self::hasFilledFields($record?->vital) ? '✓' : null)
-                        ->badgeColor('success')
+                        ->extraAttributes(fn (?PatientHistory $record) => self::hasFilledFields($record?->vital)
+                            ? ['style' => 'background-color: #fee2e2; border-radius: 0.5rem;']
+                            : [])
                         ->schema([
                             Fieldset::make('Vitals')
                                 ->relationship('vital')
@@ -344,8 +346,9 @@ class PatientHistoryForm
                                 ]),
                         ]),
                     Tabs\Tab::make('Gynec History')
-                        ->badge(fn (?PatientHistory $record) => self::hasFilledFields($record?->womenHistory) ? '✓' : null)
-                        ->badgeColor('success')
+                        ->extraAttributes(fn (?PatientHistory $record) => self::hasFilledFields($record?->womenHistory)
+                            ? ['style' => 'background-color: #fee2e2; border-radius: 0.5rem;']
+                            : [])
                         ->schema([
                             Fieldset::make('Gynec History')
                                 ->relationship('womenHistory')
@@ -508,8 +511,9 @@ class PatientHistoryForm
                                 ]),
                         ]),
                     Tabs\Tab::make('Panchakarma')
-                        ->badge(fn (?PatientHistory $record) => $record?->patientHistoryPanchakarmas()->whereNotNull('Detail')->where('Detail', '!=', '')->exists() ? '✓' : null)
-                        ->badgeColor('success')
+                        ->extraAttributes(fn (?PatientHistory $record) => $record?->patientHistoryPanchakarmas()->whereNotNull('Detail')->where('Detail', '!=', '')->exists()
+                            ? ['style' => 'background-color: #fee2e2; border-radius: 0.5rem;']
+                            : [])
                         ->schema(
                             [
                                 Repeater::make('panchakarmas')
@@ -561,15 +565,17 @@ class PatientHistoryForm
                     self::rogaPariska(),
 
                     Tabs\Tab::make('HetuPariksa')
-                        ->badge(fn (?PatientHistory $record) => self::hasFilledFields($record?->hetuPariksa) ? '✓' : null)
-                        ->badgeColor('success')
+                        ->extraAttributes(fn (?PatientHistory $record) => self::hasFilledFields($record?->hetuPariksa)
+                            ? ['style' => 'background-color: #fee2e2; border-radius: 0.5rem;']
+                            : [])
                         ->schema([
                             HetuPariksaForm::configure($schema),
                         ]),
 
                     Tabs\Tab::make('Patient Files')
-                        ->badge(fn (?PatientHistory $record) => $record?->patientFiles()->exists() ? '✓' : null)
-                        ->badgeColor('success')
+                        ->extraAttributes(fn (?PatientHistory $record) => $record?->patientFiles()->exists()
+                            ? ['style' => 'background-color: #fee2e2; border-radius: 0.5rem;']
+                            : [])
                         ->schema([
                             Repeater::make('patientFiles')
                                 ->relationship('patientFiles')
@@ -590,8 +596,9 @@ class PatientHistoryForm
                         ]),
 
                     Tabs\Tab::make('Sketches')
-                        ->badge(fn (?PatientHistory $record) => $record?->sketches()->exists() ? '✓' : null)
-                        ->badgeColor('success')
+                        ->extraAttributes(fn (?PatientHistory $record) => $record?->sketches()->exists()
+                            ? ['style' => 'background-color: #fee2e2; border-radius: 0.5rem;']
+                            : [])
                         ->schema([
                             Repeater::make('sketches')
                                 ->relationship('sketches')
@@ -608,8 +615,9 @@ class PatientHistoryForm
                         ]),
 
                     Tabs\Tab::make('Captures')
-                        ->badge(fn (?PatientHistory $record) => $record?->captures()->exists() ? '✓' : null)
-                        ->badgeColor('success')
+                        ->extraAttributes(fn (?PatientHistory $record) => $record?->captures()->exists()
+                            ? ['style' => 'background-color: #fee2e2; border-radius: 0.5rem;']
+                            : [])
                         ->schema([
                             Repeater::make('captures')
                                 ->relationship('captures')
@@ -660,8 +668,9 @@ class PatientHistoryForm
     {
 
         return Tabs\Tab::make('RogaPariska')
-            ->badge(fn (?PatientHistory $record) => self::hasFilledFields($record?->rogaPariksa) ? '✓' : null)
-            ->badgeColor('success')
+            ->extraAttributes(fn (?PatientHistory $record) => self::hasFilledFields($record?->rogaPariksa)
+                ? ['style' => 'background-color: #fee2e2; border-radius: 0.5rem;']
+                : [])
             ->schema([
                 Group::make()->relationship('rogaPariksa')->schema([
 

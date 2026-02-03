@@ -11,6 +11,7 @@ use Filament\Support\Icons\Heroicon;
 class Appointments extends Page
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Calendar;
+    protected static ?int $navigationSort = 2;
     protected string $view = 'filament.app.pages.appointments';
 
     public function getHeaderWidgets(): array

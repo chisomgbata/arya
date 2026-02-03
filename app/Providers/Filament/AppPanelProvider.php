@@ -12,7 +12,7 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationItem;
-use Filament\Pages\Dashboard;
+use App\Filament\App\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -47,11 +47,12 @@ class AppPanelProvider extends PanelProvider
             ->widgets([
             ])
             ->navigationItems([
-                NavigationItem::make('Admin Panel')
+                NavigationItem::make('Admin')
                     ->url('/admin')
                     ->icon('heroicon-o-shield-check')
                     ->openUrlInNewTab()
-                    ->sort(100),
+                    ->group('Management')
+                    ->sort(3),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth(Width::TwoExtraLarge->value)

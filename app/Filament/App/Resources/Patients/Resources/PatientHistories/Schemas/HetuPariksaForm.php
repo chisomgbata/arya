@@ -16,6 +16,11 @@ class HetuPariksaForm
                 ->schema([
                     ViewField::make('Responses')
                         ->view('hetu-form')
+                        ->afterStateHydrated(function (ViewField $component, $state): void {
+                            if (empty($state)) {
+                                $component->state((object) []);
+                            }
+                        })
                         ->hiddenLabel(),
                 ]);
     }

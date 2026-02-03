@@ -3,6 +3,7 @@
 namespace App\Filament\App\Widgets;
 
 use App\Filament\App\Resources\Patients\PatientResource;
+use App\Filament\App\Resources\Patients\Resources\PatientHistories\PatientHistoryResource;
 use App\Models\CalendarAppointment;
 use App\Models\PatientHistory;
 use Filament\Actions\Action;
@@ -113,13 +114,42 @@ class Calendar extends CalendarWidget
 
     public function viewAction(): ViewAction
     {
-        return parent::viewAction();
+        return parent::viewAction()
+            ->visible(fn (): bool => !($this->getEventRecord() instanceof PatientHistory));
     }
 
     public function deleteAction(): DeleteAction
     {
         return parent::deleteAction()
             ->requiresConfirmation();
+    }
+
+    public function viewPatientHistoryAction(): Action
+    {
+        return Action::make('viewPatientHistory')
+            ->label('View')
+            ->icon('heroicon-o-eye')
+            ->model(PatientHistory::class)
+            ->record(fn () => $this->getEventRecord())
+            ->visible(fn (): bool => $this->getEventRecord() instanceof PatientHistory)
+            ->action(function (?PatientHistory $record) {
+                if (! $record) {
+                    return null;
+                }
+
+                $tenant = Filament::getTenant();
+
+                return redirect()->to(
+                    PatientHistoryResource::getUrl(
+                        name: 'edit',
+                        parameters: [
+                            'record' => $record,
+                            'patient' => $record->PatientId,
+                        ],
+                        tenant: $tenant,
+                    )
+                );
+            });
     }
 
     public function visitPatientAction(): Action
@@ -144,6 +174,7 @@ class Calendar extends CalendarWidget
         return [
             $this->editAction(),
             $this->viewAction(),
+            $this->viewPatientHistoryAction(),
             $this->deleteAction(),
         ];
     }

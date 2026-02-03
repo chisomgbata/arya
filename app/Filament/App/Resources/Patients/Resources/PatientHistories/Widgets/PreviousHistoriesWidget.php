@@ -1,45 +1,47 @@
 <?php
 
-namespace App\Filament\App\Resources\Patients\Resources\PatientHistories\Tables;
+namespace App\Filament\App\Resources\Patients\Resources\PatientHistories\Widgets;
 
 use App\Filament\App\Resources\Patients\Resources\PatientHistories\PatientHistoryResource;
 use App\Models\PatientHistory;
 use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\DeleteAction;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
-class PatientHistoriesTable
+class PreviousHistoriesWidget extends TableWidget
 {
-    public static function configure(Table $table): Table
+    public ?string $patientId = null;
+
+    public ?string $currentRecordId = null;
+
+    protected int|string|array $columnSpan = 'full';
+
+    protected static ?string $heading = 'Previous Patient Histories';
+
+    public function table(Table $table): Table
     {
         return $table
+            ->query(
+                PatientHistory::query()
+                    ->where('PatientId', $this->patientId)
+                    ->when($this->currentRecordId, fn (Builder $query) => $query->where('Id', '!=', $this->currentRecordId))
+                    ->with(['diseases', 'symptoms', 'prescriptions'])
+                    ->latest('CreatedDate')
+            )
             ->columns([
-                // Stack 1: Clinical Details (Diseases + Symptoms)
                 TextColumn::make('diseases.Name')
-                    ->label('Clinical Details')
+                    ->label('Diseases')
                     ->badge()
                     ->limitList(2)
                     ->separator(',')
-                    ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query
-                            ->whereHas('diseases', fn (Builder $q) => $q->where('Name', 'like', "%{$search}%"))
-                            ->orWhereHas('symptoms', fn (Builder $q) => $q->where('Name', 'like', "%{$search}%"));
-                    })
-                    ->description(fn (PatientHistory $record) => 'Symptoms: '.$record->symptoms->pluck('Name')->take(3)->implode(', ')
-                    )
                     ->wrap(),
 
-                // Stack 2: Prescriptions
                 TextColumn::make('prescriptions_count')
                     ->counts('prescriptions')
                     ->label('Meds')
@@ -47,19 +49,15 @@ class PatientHistoriesTable
                     ->color('gray')
                     ->alignCenter(),
 
-                // Stack 3: Financials (Consultation + Medicine Fees)
                 TextColumn::make('ConsultationFee')
                     ->label('Fees')
                     ->numeric()
                     ->weight(FontWeight::Bold)
                     ->prefix('Consult: ')
-                    ->description(fn (PatientHistory $record) => 'Meds: '.number_format($record->MedicinesFee)
-                    )
-                    ->sortable(),
+                    ->description(fn (PatientHistory $record) => 'Meds: '.number_format($record->MedicinesFee)),
 
-                // Stack 4: Timeline (Created + Next Date)
                 TextColumn::make('CreatedDate')
-                    ->label('Timeline')
+                    ->label('Date')
                     ->dateTime('M d, Y h:i A')
                     ->sortable()
                     ->description(fn (PatientHistory $record) => $record->NextAppointmentDate
@@ -67,13 +65,16 @@ class PatientHistoriesTable
                         : 'No follow-up'
                     ),
             ])
-            ->filters([
-                TrashedFilter::make(),
-            ])
             ->recordActions([
-                EditAction::make(),
+                Action::make('edit')
+                    ->icon(Heroicon::PencilSquare)
+                    ->url(fn (PatientHistory $record): string => PatientHistoryResource::getUrl('edit', [
+                        'record' => $record,
+                        'patient' => $record->PatientId,
+                    ])),
+
                 Action::make('replicate')
-                    ->icon('heroicon-o-document-duplicate') // Filament v3 syntax
+                    ->icon('heroicon-o-document-duplicate')
                     ->requiresConfirmation()
                     ->action(function (PatientHistory $record) {
                         $newHistory = DB::transaction(function () use ($record) {
@@ -126,18 +127,15 @@ class PatientHistoriesTable
                     }),
 
                 Action::make('print')
-                    ->button()
-                    ->color('gray')
                     ->icon(Heroicon::Printer)
+                    ->color('gray')
                     ->url(fn (PatientHistory $record): string => route('order.print', $record))
                     ->openUrlInNewTab(),
+
+                DeleteAction::make(),
             ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
-                ]),
-            ]);
+            ->emptyStateHeading('No previous histories')
+            ->emptyStateDescription('This patient has no previous history entries.')
+            ->paginated([5, 10, 25]);
     }
 }

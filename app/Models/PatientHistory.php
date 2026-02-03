@@ -84,9 +84,19 @@ class PatientHistory extends Model implements Eventable
         return $this->hasMany(PatientHistoryPanchakarma::class, 'PatientHistoryId');
     }
 
+    public function patientFiles(): HasMany
+    {
+        return $this->hasMany(PatientFile::class, 'patient_history_id');
+    }
+
+    public function sketches(): HasMany
+    {
+        return $this->hasMany(Sketch::class, 'patient_history_id');
+    }
+
     public function captures(): HasMany
     {
-        return $this->hasMany(ImageCapture::class);
+        return $this->hasMany(ImageCapture::class, 'patient_history_id');
     }
 
     public function rogaPariksa(): HasOne
@@ -116,7 +126,7 @@ class PatientHistory extends Model implements Eventable
             'IsVital' => 'boolean',
             'IsWomenHistory' => 'boolean',
             'IsImages' => 'boolean',
-            'NextAppointmentDate' => 'datetime'
+            'NextAppointmentDate' => 'datetime',
         ];
     }
 }

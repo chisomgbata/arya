@@ -1,10 +1,17 @@
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
     <div
         x-data="{
-            responses: $wire.$entangle('{{ $getStatePath() }}'),
+            responses: {},
 
             init() {
-                if (!this.responses) this.responses = {};
+                let state = $wire.get('{{ $getStatePath() }}');
+                this.responses = (state && typeof state === 'object' && !Array.isArray(state))
+                    ? JSON.parse(JSON.stringify(state))
+                    : {};
+
+                this.$watch('responses', (value) => {
+                    $wire.$set('{{ $getStatePath() }}', JSON.parse(JSON.stringify(value)));
+                });
             },
 
             // Safe getter

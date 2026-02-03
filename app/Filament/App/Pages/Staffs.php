@@ -28,7 +28,8 @@ class Staffs extends Page implements HasActions, HasSchemas, HasTable
     use InteractsWithTable;
 
     protected static string|null|BackedEnum $navigationIcon = Heroicon::OutlinedUser;
-    protected static string|null|UnitEnum $navigationGroup = 'User Management';
+    protected static string|null|UnitEnum $navigationGroup = 'Management';
+    protected static ?int $navigationSort = 1;
     protected string $view = 'filament.app.pages.staffs';
 
     public function table(Table $table): Table

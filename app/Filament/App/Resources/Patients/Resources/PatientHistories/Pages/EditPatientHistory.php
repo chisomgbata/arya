@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\Patients\Resources\PatientHistories\Pages;
 
 use App\Filament\App\Resources\Patients\Resources\PatientHistories\PatientHistoryResource;
+use App\Filament\App\Resources\Patients\Resources\PatientHistories\Widgets\PreviousHistoriesWidget;
 use App\Models\PatientHistory;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -25,8 +26,23 @@ class EditPatientHistory extends EditRecord
                 ->button()
                 ->color('gray')
                 ->icon(Heroicon::Printer)
-                ->url(fn(PatientHistory $record): string => route('order.print', $record))
+                ->url(fn (PatientHistory $record): string => route('order.print', $record))
                 ->openUrlInNewTab(),
+        ];
+    }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            PreviousHistoriesWidget::class,
+        ];
+    }
+
+    public function getFooterWidgetData(): array
+    {
+        return [
+            'patientId' => $this->getRecord()->PatientId,
+            'currentRecordId' => $this->getRecord()->Id,
         ];
     }
 }

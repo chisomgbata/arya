@@ -37,6 +37,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Saade\FilamentAutograph\Forms\Components\SignaturePad;
 
@@ -187,8 +188,53 @@ class PatientHistoryForm
                                                                 Checkbox::make('Selected'),
                                                                 Hidden::make('MedicineId'),
                                                                 Hidden::make('MedicineName'),
-                                                                Placeholder::make('MedicineName')
-                                                                    ->label('Name'),
+                                                                Actions::make([
+                                                                    Action::make('view_medicine')
+                                                                        ->label(fn (Get $get) => $get('MedicineName') ?? '-')
+                                                                        ->link()
+                                                                        ->color('primary')
+                                                                        ->modalHeading(fn (Get $get) => $get('MedicineName') ?? 'Medicine Details')
+                                                                        ->modalSubmitAction(false)
+                                                                        ->modalCancelActionLabel('Close')
+                                                                        ->extraModalFooterActions([
+                                                                            Action::make('print_medicine')
+                                                                                ->label('Print')
+                                                                                ->icon('heroicon-o-printer')
+                                                                                ->color('gray')
+                                                                                ->alpineClickHandler(<<<'JS'
+                                                                                    let m=$el.closest('.fi-modal'),c=m.querySelector('.fi-modal-content'),t=m.querySelector('.fi-modal-heading')?.textContent||'Medicine Details',w=window.open('','_blank');w.document.write('<html><head><title>'+t+'</title><style>body{font-family:sans-serif;padding:20px} .detail{margin-bottom:12px} .label{font-weight:600;color:#374151;margin-bottom:2px} .value{color:#1f2937}</style></head><body>'+c.innerHTML+'</body></html>');w.document.close();w.focus();w.print()
+                                                                                    JS),
+                                                                        ])
+                                                                        ->schema(function (Get $get) {
+                                                                            $medicine = Medicine::with('medicineForm')->find($get('MedicineId'));
+
+                                                                            if (! $medicine) {
+                                                                                return [Placeholder::make('not_found')->content('Medicine not found.')->hiddenLabel()];
+                                                                            }
+
+                                                                            $fields = [
+                                                                                Placeholder::make('med_name')
+                                                                                    ->label('Name')
+                                                                                    ->content($medicine->Name ?? '-'),
+                                                                                Placeholder::make('med_company')
+                                                                                    ->label('Company Name')
+                                                                                    ->content($medicine->CompanyName ?? '-'),
+                                                                                Placeholder::make('med_form')
+                                                                                    ->label('Medicine Form')
+                                                                                    ->content($medicine->medicineForm?->Name ?? '-'),
+                                                                            ];
+
+                                                                            if ($medicine->Description) {
+                                                                                $fields[] = Placeholder::make('med_description')
+                                                                                    ->label('Description')
+                                                                                    ->content(new HtmlString($medicine->Description))
+                                                                                    ->columnSpanFull();
+                                                                            }
+
+                                                                            return $fields;
+                                                                        })
+                                                                        ->modalWidth('lg'),
+                                                                ]),
 
                                                                 TextInput::make('MedicineFormName')
                                                                     ->label('Medicine Form')

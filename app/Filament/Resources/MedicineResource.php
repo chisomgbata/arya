@@ -35,7 +35,7 @@ class MedicineResource extends Resource
 
     protected static ?string $slug = "medicines";
 
-    protected static string|null|UnitEnum $navigationGroup = "Medicine Management";
+    protected static string|null|UnitEnum $navigationGroup = "Management";
 
     protected static ?int $navigationSort = 2;
 

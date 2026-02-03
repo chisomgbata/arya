@@ -9,6 +9,8 @@ class AwaitingPatient extends Page
 {
     protected static string|BackedEnum|null $navigationIcon =
         'hugeicons-medicine-02';
+    protected static ?string $navigationLabel = 'Awaiting Patients';
+    protected static ?int $navigationSort = 3;
 
     protected string $view = 'filament.app.pages.awaiting-patient';
 

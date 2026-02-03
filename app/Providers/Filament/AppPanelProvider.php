@@ -47,11 +47,12 @@ class AppPanelProvider extends PanelProvider
             ->widgets([
             ])
             ->navigationItems([
-                NavigationItem::make('Admin Panel')
+                NavigationItem::make('Admin')
                     ->url('/admin')
                     ->icon('heroicon-o-shield-check')
                     ->openUrlInNewTab()
-                    ->sort(100),
+                    ->group('Management')
+                    ->sort(3),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth(Width::TwoExtraLarge->value)

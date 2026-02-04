@@ -41,6 +41,8 @@ class MedicineResource extends Resource
 
     protected static string|null|UnitEnum $navigationGroup = "Management";
 
+    protected static ?string $navigationLabel = 'Medicines';
+
     protected static ?int $navigationSort = 2;
 
     protected static bool $isScopedToTenant = false;

@@ -3,7 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\MedicineResource\Pages;
+use App\Models\Anupana;
+use App\Models\Disease;
+use App\Models\DiseaseType;
+use App\Models\DiseaseTypeMedicine;
 use App\Models\Medicine;
+use App\Models\MedicineForm;
+use App\Models\TimeOfAdministration;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -14,14 +20,12 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -31,7 +35,7 @@ use UnitEnum;
 
 class MedicineResource extends Resource
 {
-    protected static ?string $model = Medicine::class;
+    protected static ?string $model = DiseaseTypeMedicine::class;
 
     protected static ?string $slug = "medicines";
 
@@ -47,18 +51,84 @@ class MedicineResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Select::make("MedicineFormId")
+            Select::make('DiseaseId')
+                ->label('Disease')
+                ->options(fn () => Disease::query()->pluck('Name', 'Id'))
                 ->searchable()
-                ->relationship("medicineForm", "Name")
+                ->preload()
+                ->live()
+                ->required()
+                ->dehydrated(false),
+
+            Select::make('DiseaseTypeId')
+                ->label('Disease Type')
+                ->options(function (Get $get) {
+                    $diseaseId = $get('DiseaseId');
+
+                    if (! $diseaseId) {
+                        return [];
+                    }
+
+                    return DiseaseType::query()
+                        ->where('DiseaseId', $diseaseId)
+                        ->pluck('Name', 'Id');
+                })
+                ->searchable()
                 ->preload()
                 ->required(),
-            TextInput::make("Name"),
 
-            TextInput::make("CompanyName"),
+            Select::make('MedicineId')
+                ->label('Medicine')
+                ->options(fn () => Medicine::query()->pluck('Name', 'Id'))
+                ->searchable()
+                ->preload()
+                ->required()
+                ->live()
+                ->afterStateUpdated(function ($state, Get $get, \Filament\Schemas\Components\Utilities\Set $set) {
+                    if (! $state) {
+                        $set('MedicineFormId', null);
+                        $set('CompanyName', null);
+                        return;
+                    }
 
-            RichEditor::make("Description")->columnSpanFull(),
+                    $medicine = Medicine::query()
+                        ->select(['Id', 'MedicineFormId', 'CompanyName'])
+                        ->find($state);
 
-            Checkbox::make("IsPattern"),
+                    $set('MedicineFormId', $medicine?->MedicineFormId);
+                    $set('CompanyName', $medicine?->CompanyName);
+                }),
+
+            Select::make('MedicineFormId')
+                ->label('Medicine Form')
+                ->options(fn () => MedicineForm::query()->pluck('Name', 'Id'))
+                ->searchable()
+                ->preload()
+                ->required(),
+
+            TextInput::make('Dose')
+                ->required(),
+
+            Select::make('TimeOfAdministrationId')
+                ->label('Time Of Administration')
+                ->options(fn () => TimeOfAdministration::query()->pluck('Name', 'Id'))
+                ->searchable()
+                ->preload()
+                ->required(),
+
+            TextInput::make('Duration')
+                ->required(),
+
+            Select::make('AnupanaId')
+                ->label('Anupana')
+                ->options(fn () => Anupana::query()->pluck('Name', 'Id'))
+                ->searchable()
+                ->preload()
+                ->required(),
+
+            TextInput::make('CompanyName')
+                ->label('Company Name')
+                ->required(),
         ]);
     }
 
@@ -66,19 +136,33 @@ class MedicineResource extends Resource
     {
         return $table
             ->modifyQueryUsing(function (Builder $query): Builder {
-                if (!Filament::getTenant()) {
+                if (! Filament::getTenant()) {
                     return $query;
                 }
-                return $query->where("ClinicId", Filament::getTenant()->Id);
+
+                return $query->whereHas('medicine', fn (Builder $medicine) => $medicine->where('ClinicId', Filament::getTenant()->Id));
             })
             ->columns([
-                TextColumn::make("Name")->searchable(),
-
-                TextColumn::make("CompanyName")->searchable(),
-
-                TextColumn::make("medicineForm.Name"),
-
-                CheckboxColumn::make("IsPattern"),
+                TextColumn::make('diseaseType.disease.Name')
+                    ->label('Disease')
+                    ->searchable(),
+                TextColumn::make('diseaseType.Name')
+                    ->label('Disease Type')
+                    ->searchable(),
+                TextColumn::make('medicine.Name')
+                    ->label('Medicine')
+                    ->searchable(),
+                TextColumn::make('medicine.medicineForm.Name')
+                    ->label('Medicine Form'),
+                TextColumn::make('Dose'),
+                TextColumn::make('timeOfAdministration.Name')
+                    ->label('Time Of Administration'),
+                TextColumn::make('Duration'),
+                TextColumn::make('anupana.Name')
+                    ->label('Anupana'),
+                TextColumn::make('medicine.CompanyName')
+                    ->label('Company Name')
+                    ->searchable(),
             ])
             ->filters([TrashedFilter::make()])
             ->recordActions([
@@ -114,6 +198,6 @@ class MedicineResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ["Name", "CompanyName"];
+        return [];
     }
 }

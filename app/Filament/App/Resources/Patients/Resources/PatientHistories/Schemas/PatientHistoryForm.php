@@ -9,6 +9,7 @@ use App\Models\DiseaseTypeMedicine;
 use App\Models\Medicine;
 use App\Models\MedicineForm;
 use App\Models\Panchakarma;
+use App\Models\Patient;
 use App\Models\PatientHistory;
 use App\Models\TimeOfAdministration;
 use emmanpbarrameda\FilamentTakePictureField\Forms\Components\TakePicture;
@@ -51,12 +52,28 @@ class PatientHistoryForm
                     Tabs\Tab::make('Info')
                         ->badge(fn (?PatientHistory $record) => $record?->prescriptions()->exists() ? '●' : null)
                         ->badgeColor('danger')
-                        ->schema(function () {
+                        ->schema(function (?PatientHistory $record) {
                             $globalAnupanas = Anupana::query()->whereNotNull('NameGujarati')->pluck('NameGujarati', 'Id');
                             $globalTimeOfAdministrations = TimeOfAdministration::query()->whereNotNull('NameGujarati')->pluck('NameGujarati', 'Id');
                             $globalMedicineForms = MedicineForm::query()->pluck('Name', 'Id');
 
                             return [
+                                Placeholder::make('patient_complain_of')
+                                    ->label('Complain Of')
+                                    ->content(function () use ($record) {
+                                        $patientId = $record?->PatientId ?? request()->route('patient');
+
+                                        if (! $patientId) {
+                                            return '-';
+                                        }
+
+                                        $complain = Patient::query()
+                                            ->where('Id', $patientId)
+                                            ->value('complain_of');
+
+                                        return $complain ?: '-';
+                                    })
+                                    ->columnSpanFull(),
 
                                 Select::make('diseases')
                                     ->columnSpanFull()

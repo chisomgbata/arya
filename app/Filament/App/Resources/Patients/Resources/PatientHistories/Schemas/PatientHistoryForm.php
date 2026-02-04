@@ -333,6 +333,50 @@ class PatientHistoryForm
 
                                     ]),
 
+                                Select::make('other_medicine_id')
+                                    ->label('Add Other Medicine')
+                                    ->dehydrated(false)
+                                    ->searchable()
+                                    ->preload()
+                                    ->options(Medicine::query()->pluck('Name', 'Id'))
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Get $get, Set $set) use ($globalTimeOfAdministrations, $globalAnupanas) {
+                                        if (! $state) {
+                                            return;
+                                        }
+
+                                        $prescriptions = $get('Prescriptions') ?? [];
+
+                                        $alreadyAdded = collect($prescriptions)
+                                            ->contains(fn ($item) => ($item['MedicineId'] ?? null) == $state);
+
+                                        if ($alreadyAdded) {
+                                            $set('other_medicine_id', null);
+                                            return;
+                                        }
+
+                                        $default = DiseaseTypeMedicine::query()
+                                            ->where('MedicineId', $state)
+                                            ->orderByDesc('Id')
+                                            ->first();
+
+                                        $medicine = Medicine::with('medicineForm')->find($state);
+
+                                        $prescriptions[Str::uuid()->toString()] = [
+                                            'MedicineId' => $medicine?->Id ?? $state,
+                                            'MedicineFormName' => $medicine?->medicineForm?->Name ?? '',
+                                            'Anupana' => $default?->AnupanaId ? ($globalAnupanas[$default->AnupanaId] ?? '') : '',
+                                            'Dose' => $default?->Dose ?? '',
+                                            'TimeOfAdministration' => $default?->TimeOfAdministrationId ? ($globalTimeOfAdministrations[$default->TimeOfAdministrationId] ?? '') : '',
+                                            'Duration' => $default?->Duration ?? '',
+                                            'Amount' => 0,
+                                        ];
+
+                                        $set('Prescriptions', $prescriptions);
+                                        $set('other_medicine_id', null);
+                                    })
+                                    ->columnSpanFull(),
+
                                 Repeater::make('Prescriptions')
                                     ->relationship('prescriptions')
                                     ->table([

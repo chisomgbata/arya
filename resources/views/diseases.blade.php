@@ -1,11 +1,17 @@
 @php
     $sections = [
         'Introduction' => 'Introduction',
-        'Nidana (Causes)' => 'Causes',
-        'Laboratory Investigations' => 'LaboratoryInvestions',
         'Purvaroopa' => 'Purvaroopa',
-        'Pathya - Apathya' => 'DoDont',
+        'Do Dont' => 'DoDont',
+        'Sadhyabadyatva' => 'Sadhyabadyatva',
         'Chikitsa Sutra' => 'ChikitsaSutra',
+        'Samprapti' => 'Samprapti',
+        'Upadrava' => 'Upadrava',
+        'Panchakarma' => 'Panchakarma',
+        'Causes' => 'Causes',
+        'Arishta Laxana' => 'ArishtaLaxana',
+        'Differential Diagnosis' => 'DifferentialDiagnosis',
+        'Laboratory Investions' => 'LaboratoryInvestions',
     ];
 @endphp
 

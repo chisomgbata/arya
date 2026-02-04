@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Widgets;
 
+use App\Filament\App\Resources\Patients\PatientResource;
 use App\Models\Patient;
 use Filament\Actions\BulkActionGroup;
 use Filament\Tables\Columns\TextColumn;
@@ -17,7 +18,10 @@ class AwaitingPatient extends TableWidget
     public function table(Table $table): Table
     {
         return $table
-            ->query(fn (): Builder => Patient::query()->whereDoesntHave('patientHistories'))
+            ->query(fn (): Builder => Patient::query()
+                ->whereDoesntHave('patientHistories')
+                ->orderByDesc('CreatedDate'))
+            ->recordUrl(fn (Patient $record): string => PatientResource::getUrl('edit', ['record' => $record]))
             ->columns([
                 TextColumn::make('FirstName')
                     ->color('primary')

@@ -34,7 +34,7 @@ class SymptomsRelationManager extends RelationManager
                     ->icon(Heroicon::OutlinedPaperClip)
                     ->form([
                         CheckboxList::make('symptoms')
-                            ->options(fn () => Symptom::query()->pluck('Name', 'Id'))
+                            ->options(fn () => Symptom::query()->pluck('Name', 'Id')->toArray())
                             ->default(fn () => $this->getOwnerRecord()->symptoms()->pluck('Symptoms.Id')->toArray())
                             ->searchable()
                             ->bulkToggleable()
@@ -43,7 +43,12 @@ class SymptomsRelationManager extends RelationManager
                     ->modalWidth('3xl')
                     ->stickyModalFooter()
                     ->action(function (array $data): void {
-                        $this->getOwnerRecord()->symptoms()->sync($data['symptoms']);
+                        $symptomIds = $data['symptoms'] ?? [];
+
+                        $this->getOwnerRecord()->symptoms()->syncWithPivotValues(
+                            $symptomIds,
+                            ['IsMain' => true]
+                        );
                     }),
             ])->recordActions([
                 EditAction::make(),

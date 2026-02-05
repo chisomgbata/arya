@@ -34,4 +34,21 @@ class CreatePatientHistory extends CreateRecord
             'patientId' => request()->route('patient'),
         ];
     }
+
+    public function getBreadcrumbs(): array
+    {
+        $breadcrumbs = parent::getBreadcrumbs();
+
+        // Find and update the Patient edit page breadcrumb to use relation=0
+        foreach ($breadcrumbs as $url => $label) {
+            if (str_contains($url, 'relation=patientHistories')) {
+                $newUrl = str_replace('relation=patientHistories', 'relation=0', $url);
+                unset($breadcrumbs[$url]);
+                $breadcrumbs[$newUrl] = $label;
+                break;
+            }
+        }
+
+        return $breadcrumbs;
+    }
 }

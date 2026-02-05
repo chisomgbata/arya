@@ -9,6 +9,7 @@ use App\Models\DiseaseTypeMedicine;
 use App\Models\Medicine;
 use App\Models\MedicineForm;
 use App\Models\Panchakarma;
+use App\Models\Patient;
 use App\Models\PatientHistory;
 use App\Models\TimeOfAdministration;
 use emmanpbarrameda\FilamentTakePictureField\Forms\Components\TakePicture;
@@ -51,12 +52,28 @@ class PatientHistoryForm
                     Tabs\Tab::make('Info')
                         ->badge(fn (?PatientHistory $record) => $record?->prescriptions()->exists() ? '●' : null)
                         ->badgeColor('danger')
-                        ->schema(function () {
+                        ->schema(function (?PatientHistory $record) {
                             $globalAnupanas = Anupana::query()->whereNotNull('NameGujarati')->pluck('NameGujarati', 'Id');
                             $globalTimeOfAdministrations = TimeOfAdministration::query()->whereNotNull('NameGujarati')->pluck('NameGujarati', 'Id');
                             $globalMedicineForms = MedicineForm::query()->pluck('Name', 'Id');
 
                             return [
+                                Placeholder::make('patient_complain_of')
+                                    ->label('Complain Of')
+                                    ->content(function () use ($record) {
+                                        $patientId = $record?->PatientId ?? request()->route('patient');
+
+                                        if (! $patientId) {
+                                            return '-';
+                                        }
+
+                                        $complain = Patient::query()
+                                            ->where('Id', $patientId)
+                                            ->value('complain_of');
+
+                                        return $complain ?: '-';
+                                    })
+                                    ->columnSpanFull(),
 
                                 Select::make('diseases')
                                     ->columnSpanFull()
@@ -315,6 +332,50 @@ class PatientHistoryForm
                                         Hidden::make('type_id'),
 
                                     ]),
+
+                                Select::make('other_medicine_id')
+                                    ->label('Add Other Medicine')
+                                    ->dehydrated(false)
+                                    ->searchable()
+                                    ->preload()
+                                    ->options(Medicine::query()->pluck('Name', 'Id'))
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Get $get, Set $set) use ($globalTimeOfAdministrations, $globalAnupanas) {
+                                        if (! $state) {
+                                            return;
+                                        }
+
+                                        $prescriptions = $get('Prescriptions') ?? [];
+
+                                        $alreadyAdded = collect($prescriptions)
+                                            ->contains(fn ($item) => ($item['MedicineId'] ?? null) == $state);
+
+                                        if ($alreadyAdded) {
+                                            $set('other_medicine_id', null);
+                                            return;
+                                        }
+
+                                        $default = DiseaseTypeMedicine::query()
+                                            ->where('MedicineId', $state)
+                                            ->orderByDesc('Id')
+                                            ->first();
+
+                                        $medicine = Medicine::with('medicineForm')->find($state);
+
+                                        $prescriptions[Str::uuid()->toString()] = [
+                                            'MedicineId' => $medicine?->Id ?? $state,
+                                            'MedicineFormName' => $medicine?->medicineForm?->Name ?? '',
+                                            'Anupana' => $default?->AnupanaId ? ($globalAnupanas[$default->AnupanaId] ?? '') : '',
+                                            'Dose' => $default?->Dose ?? '',
+                                            'TimeOfAdministration' => $default?->TimeOfAdministrationId ? ($globalTimeOfAdministrations[$default->TimeOfAdministrationId] ?? '') : '',
+                                            'Duration' => $default?->Duration ?? '',
+                                            'Amount' => 0,
+                                        ];
+
+                                        $set('Prescriptions', $prescriptions);
+                                        $set('other_medicine_id', null);
+                                    })
+                                    ->columnSpanFull(),
 
                                 Repeater::make('Prescriptions')
                                     ->relationship('prescriptions')

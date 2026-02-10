@@ -171,9 +171,35 @@ class PatientHistoryForm
                                                                 ->schema([
                                                                     Hidden::make('DiseaseTypeId')->default(fn () => $get('type_id')),
                                                                     Hidden::make('IsSpecial')->default(true),
-                                                                    Select::make('MedicineId')->label('Medicine')->searchable()->options(function ($query) {
-                                                                        return Medicine::query()->pluck('Name', 'Id');
-                                                                    }),
+                                                                    Radio::make('medicine_mode')
+                                                                        ->label('Medicine')
+                                                                        ->options([
+                                                                            'existing' => 'Select Existing',
+                                                                            'new' => 'Create New',
+                                                                        ])
+                                                                        ->default('existing')
+                                                                        ->live()
+                                                                        ->inline()
+                                                                        ->columnSpanFull(),
+                                                                    Select::make('MedicineId')
+                                                                        ->label('Existing Medicine')
+                                                                        ->searchable()
+                                                                        ->options(fn () => Medicine::query()->pluck('Name', 'Id'))
+                                                                        ->visible(fn (Get $get) => $get('medicine_mode') !== 'new')
+                                                                        ->required(fn (Get $get) => $get('medicine_mode') !== 'new'),
+                                                                    TextInput::make('new_medicine_name')
+                                                                        ->label('Medicine Name')
+                                                                        ->visible(fn (Get $get) => $get('medicine_mode') === 'new')
+                                                                        ->required(fn (Get $get) => $get('medicine_mode') === 'new'),
+                                                                    Select::make('new_medicine_form_id')
+                                                                        ->label('Medicine Form')
+                                                                        ->options(fn () => MedicineForm::query()->pluck('Name', 'Id'))
+                                                                        ->searchable()
+                                                                        ->visible(fn (Get $get) => $get('medicine_mode') === 'new')
+                                                                        ->required(fn (Get $get) => $get('medicine_mode') === 'new'),
+                                                                    TextInput::make('new_medicine_company')
+                                                                        ->label('Company Name')
+                                                                        ->visible(fn (Get $get) => $get('medicine_mode') === 'new'),
                                                                     TextInput::make('Dose')->required(),
 
                                                                     Select::make('TimeOfAdministrationId')
@@ -188,7 +214,28 @@ class PatientHistoryForm
 
                                                                     TextInput::make('Duration')->required(),
                                                                 ])->action(function ($data) {
-                                                                    DiseaseTypeMedicine::create($data);
+                                                                    $medicineId = $data['MedicineId'] ?? null;
+
+                                                                    if (($data['medicine_mode'] ?? 'existing') === 'new') {
+                                                                        $medicine = Medicine::create([
+                                                                            'Name' => $data['new_medicine_name'],
+                                                                            'MedicineFormId' => $data['new_medicine_form_id'],
+                                                                            'CompanyName' => $data['new_medicine_company'] ?? null,
+                                                                            'IsSpecial' => true,
+                                                                            'IsPattern' => false,
+                                                                        ]);
+                                                                        $medicineId = $medicine->Id;
+                                                                    }
+
+                                                                    DiseaseTypeMedicine::create([
+                                                                        'DiseaseTypeId' => $data['DiseaseTypeId'],
+                                                                        'MedicineId' => $medicineId,
+                                                                        'IsSpecial' => $data['IsSpecial'],
+                                                                        'Dose' => $data['Dose'],
+                                                                        'TimeOfAdministrationId' => $data['TimeOfAdministrationId'],
+                                                                        'AnupanaId' => $data['AnupanaId'],
+                                                                        'Duration' => $data['Duration'],
+                                                                    ]);
                                                                 })->button(),
                                                         ])
                                                         ->table([
@@ -352,6 +399,7 @@ class PatientHistoryForm
 
                                         if ($alreadyAdded) {
                                             $set('other_medicine_id', null);
+
                                             return;
                                         }
 

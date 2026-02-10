@@ -213,8 +213,10 @@ class PatientHistoryForm
                                                                         ->options($globalAnupanas),
 
                                                                     TextInput::make('Duration')->required(),
-                                                                ])->action(function ($data) {
+                                                                ])->action(function ($data, Set $set, Get $get) use ($globalTimeOfAdministrations, $globalAnupanas) {
                                                                     $medicineId = $data['MedicineId'] ?? null;
+                                                                    $medicineName = null;
+                                                                    $medicineFormName = null;
 
                                                                     if (($data['medicine_mode'] ?? 'existing') === 'new') {
                                                                         $medicine = Medicine::create([
@@ -225,6 +227,12 @@ class PatientHistoryForm
                                                                             'IsPattern' => false,
                                                                         ]);
                                                                         $medicineId = $medicine->Id;
+                                                                        $medicineName = $medicine->Name;
+                                                                        $medicineFormName = $medicine->medicineForm?->Name;
+                                                                    } else {
+                                                                        $medicine = Medicine::with('medicineForm')->find($medicineId);
+                                                                        $medicineName = $medicine?->Name;
+                                                                        $medicineFormName = $medicine?->medicineForm?->Name;
                                                                     }
 
                                                                     DiseaseTypeMedicine::create([
@@ -236,6 +244,19 @@ class PatientHistoryForm
                                                                         'AnupanaId' => $data['AnupanaId'],
                                                                         'Duration' => $data['Duration'],
                                                                     ]);
+
+                                                                    $current = $get('Medicines') ?? [];
+                                                                    $current[] = [
+                                                                        'MedicineId' => $medicineId,
+                                                                        'MedicineName' => $medicineName,
+                                                                        'MedicineFormName' => $medicineFormName,
+                                                                        'Dose' => $data['Dose'],
+                                                                        'TimeOfAdministration' => $data['TimeOfAdministrationId'] ? ($globalTimeOfAdministrations[$data['TimeOfAdministrationId']] ?? '') : '',
+                                                                        'Anupana' => $data['AnupanaId'] ? ($globalAnupanas[$data['AnupanaId']] ?? '') : '',
+                                                                        'Duration' => $data['Duration'],
+                                                                        'Selected' => false,
+                                                                    ];
+                                                                    $set('Medicines', $current);
                                                                 })->button(),
                                                         ])
                                                         ->table([

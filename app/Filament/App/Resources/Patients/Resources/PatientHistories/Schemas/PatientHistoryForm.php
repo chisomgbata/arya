@@ -806,6 +806,29 @@ class PatientHistoryForm
                                 ->defaultItems(0),
                         ]),
 
+                    Tabs\Tab::make('Patient Records')
+                        ->badge(fn (?PatientHistory $record) => $record?->patientRecords()->exists() ? '●' : null)
+                        ->badgeColor('danger')
+                        ->schema([
+                            Repeater::make('patientRecords')
+                                ->relationship('patientRecords')
+                                ->label('Patient Records')
+                                ->schema([
+                                    TakePicture::make('capture')
+                                        ->label('Capture')
+                                        ->disk('public')
+                                        ->visibility('public')
+                                        ->showCameraSelector()
+                                        ->aspect('16:9')
+                                        ->imageQuality(80)
+                                        ->shouldDeleteOnEdit(false),
+                                ])
+                                ->columns(1)
+                                ->columnSpanFull()
+                                ->cloneable()
+                                ->defaultItems(0),
+                        ]),
+
                 ])->columnSpanFull(),
             ]);
     }

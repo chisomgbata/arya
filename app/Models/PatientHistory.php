@@ -99,6 +99,11 @@ class PatientHistory extends Model implements Eventable
         return $this->hasMany(ImageCapture::class, 'patient_history_id');
     }
 
+    public function patientRecords(): HasMany
+    {
+        return $this->hasMany(PatientRecord::class, 'patient_history_id');
+    }
+
     public function rogaPariksa(): HasOne
     {
         return $this->hasOne(RogaPariksa::class);

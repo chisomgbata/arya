@@ -44,10 +44,20 @@ class SymptomsRelationManager extends RelationManager
                     ->stickyModalFooter()
                     ->action(function (array $data): void {
                         $symptomIds = $data['symptoms'] ?? [];
+                        $userId = auth()->id();
+                        $now = now();
 
                         $this->getOwnerRecord()->symptoms()->syncWithPivotValues(
                             $symptomIds,
-                            ['IsMain' => true]
+                            [
+                                'IsMain' => true,
+                                'CreatedBy' => $userId,
+                                'ModifiedBy' => $userId,
+                                'DeletedBy' => '00000000-0000-0000-0000-000000000000',
+                                'IsDeleted' => false,
+                                'CreatedDate' => $now,
+                                'ModifiedDate' => $now,
+                            ]
                         );
                     }),
             ])->recordActions([

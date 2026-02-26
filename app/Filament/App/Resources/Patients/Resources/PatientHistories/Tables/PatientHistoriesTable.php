@@ -42,14 +42,12 @@ class PatientHistoriesTable
                     ->dateTime('M d, Y h:i A')
                     ->sortable(),
 
-                TextColumn::make('Remark')
+                TextColumn::make('diseases.Name')
                     ->label('')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('Note')
-                    ->label('')
-                    ->searchable()
+                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas(
+                        'diseases',
+                        fn (Builder $q) => $q->where('Diseases.Name', 'like', "%{$search}%")
+                    ))
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 ViewColumn::make('details')

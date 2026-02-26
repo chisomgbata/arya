@@ -20,6 +20,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
@@ -79,12 +80,24 @@ class MedicineResource extends Resource
                 ->preload()
                 ->required(),
 
+            Radio::make('medicine_mode')
+                ->label('Medicine')
+                ->options([
+                    'existing' => 'Select Existing',
+                    'new' => 'Create New',
+                ])
+                ->default('existing')
+                ->live()
+                ->inline()
+                ->columnSpanFull(),
+
             Select::make('MedicineId')
                 ->label('Medicine')
                 ->options(fn () => Medicine::query()->pluck('Name', 'Id'))
                 ->searchable()
                 ->preload()
-                ->required()
+                ->required(fn (Get $get) => $get('medicine_mode') !== 'new')
+                ->visible(fn (Get $get) => $get('medicine_mode') !== 'new')
                 ->live()
                 ->afterStateUpdated(function ($state, Get $get, \Filament\Schemas\Components\Utilities\Set $set) {
                     if (! $state) {
@@ -101,12 +114,30 @@ class MedicineResource extends Resource
                     $set('CompanyName', $medicine?->CompanyName);
                 }),
 
+            TextInput::make('new_medicine_name')
+                ->label('Medicine Name')
+                ->visible(fn (Get $get) => $get('medicine_mode') === 'new')
+                ->required(fn (Get $get) => $get('medicine_mode') === 'new'),
+
+            Select::make('new_medicine_form_id')
+                ->label('Medicine Form')
+                ->options(fn () => MedicineForm::query()->pluck('Name', 'Id'))
+                ->searchable()
+                ->preload()
+                ->visible(fn (Get $get) => $get('medicine_mode') === 'new')
+                ->required(fn (Get $get) => $get('medicine_mode') === 'new'),
+
+            TextInput::make('new_medicine_company')
+                ->label('Company Name')
+                ->visible(fn (Get $get) => $get('medicine_mode') === 'new'),
+
             Select::make('MedicineFormId')
                 ->label('Medicine Form')
                 ->options(fn () => MedicineForm::query()->pluck('Name', 'Id'))
                 ->searchable()
                 ->preload()
-                ->required(),
+                ->required(fn (Get $get) => $get('medicine_mode') !== 'new')
+                ->visible(fn (Get $get) => $get('medicine_mode') !== 'new'),
 
             TextInput::make('Dose')
                 ->required(),
@@ -131,7 +162,8 @@ class MedicineResource extends Resource
 
             TextInput::make('CompanyName')
                 ->label('Company Name')
-                ->required(),
+                ->required(fn (Get $get) => $get('medicine_mode') !== 'new')
+                ->visible(fn (Get $get) => $get('medicine_mode') !== 'new'),
         ]);
     }
 

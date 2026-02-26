@@ -10,9 +10,9 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
-use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,49 +23,22 @@ class PatientHistoriesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with([
+                'patient',
+                'diseases',
+                'symptoms',
+                'prescriptions.medicine',
+            ]))
+            ->defaultSort('CreatedDate', 'desc')
             ->columns([
-                // Stack 1: Clinical Details (Diseases + Symptoms)
-                TextColumn::make('diseases.Name')
-                    ->label('Clinical Details')
-                    ->badge()
-                    ->limitList(2)
-                    ->separator(',')
-                    ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query
-                            ->whereHas('diseases', fn (Builder $q) => $q->where('Name', 'like', "%{$search}%"))
-                            ->orWhereHas('symptoms', fn (Builder $q) => $q->where('Name', 'like', "%{$search}%"));
-                    })
-                    ->description(fn (PatientHistory $record) => 'Symptoms: '.$record->symptoms->pluck('Name')->take(3)->implode(', ')
-                    )
-                    ->wrap(),
-
-                // Stack 2: Prescriptions
-                TextColumn::make('prescriptions_count')
-                    ->counts('prescriptions')
-                    ->label('Meds')
-                    ->badge()
-                    ->color('gray')
-                    ->alignCenter(),
-
-                // Stack 3: Financials (Consultation + Medicine Fees)
-                TextColumn::make('ConsultationFee')
-                    ->label('Fees')
-                    ->numeric()
-                    ->weight(FontWeight::Bold)
-                    ->prefix('Consult: ')
-                    ->description(fn (PatientHistory $record) => 'Meds: '.number_format($record->MedicinesFee)
-                    )
+                TextColumn::make('CreatedDate')
+                    ->label('Visit')
+                    ->dateTime('M d, Y h:i A')
                     ->sortable(),
 
-                // Stack 4: Timeline (Created + Next Date)
-                TextColumn::make('CreatedDate')
-                    ->label('Timeline')
-                    ->dateTime('M d, Y h:i A')
-                    ->sortable()
-                    ->description(fn (PatientHistory $record) => $record->NextAppointmentDate
-                        ? 'Next: '.$record->NextAppointmentDate->format('M d, Y')
-                        : 'No follow-up'
-                    ),
+                ViewColumn::make('details')
+                    ->label('Details')
+                    ->view('filament.app.tables.patient-history-details'),
             ])
             ->filters([
                 TrashedFilter::make(),

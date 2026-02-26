@@ -3,6 +3,8 @@
 namespace App\Filament\App\Resources\Patients\Resources\PatientHistories\Tables;
 
 use App\Filament\App\Resources\Patients\Resources\PatientHistories\PatientHistoryResource;
+use App\Models\Disease;
+use App\Models\Medicine;
 use App\Models\PatientHistory;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -10,9 +12,13 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ViewColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -36,13 +42,65 @@ class PatientHistoriesTable
                     ->dateTime('M d, Y h:i A')
                     ->sortable(),
 
+                TextColumn::make('Remark')
+                    ->label('')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('Note')
+                    ->label('')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 ViewColumn::make('details')
                     ->label('Details')
                     ->view('filament.app.tables.patient-history-details'),
             ])
             ->filters([
+                SelectFilter::make('disease')
+                    ->label('Disease')
+                    ->options(fn () => Disease::query()->orderBy('Name')->pluck('Name', 'Id'))
+                    ->searchable()
+                    ->query(fn (Builder $query, array $data) => $query->when(
+                        $data['value'],
+                        fn (Builder $q, $id) => $q->whereHas('diseases', fn (Builder $d) => $d->where('Diseases.Id', $id))
+                    )),
+
+                SelectFilter::make('medicine')
+                    ->label('Medicine')
+                    ->options(fn () => Medicine::query()->orderBy('Name')->pluck('Name', 'Id'))
+                    ->searchable()
+                    ->query(fn (Builder $query, array $data) => $query->when(
+                        $data['value'],
+                        fn (Builder $q, $id) => $q->whereHas('prescriptions', fn (Builder $p) => $p->where('MedicineId', $id))
+                    )),
+
+                Filter::make('date_range')
+                    ->label('Date Range')
+                    ->form([
+                        DatePicker::make('from')->label('From')->native(false),
+                        DatePicker::make('until')->label('Until')->native(false),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        return $query
+                            ->when($data['from'], fn (Builder $q, $date) => $q->whereDate('CreatedDate', '>=', $date))
+                            ->when($data['until'], fn (Builder $q, $date) => $q->whereDate('CreatedDate', '<=', $date));
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['from'] ?? null) {
+                            $indicators[] = 'From: '.\Carbon\Carbon::parse($data['from'])->toFormattedDateString();
+                        }
+                        if ($data['until'] ?? null) {
+                            $indicators[] = 'Until: '.\Carbon\Carbon::parse($data['until'])->toFormattedDateString();
+                        }
+
+                        return $indicators;
+                    }),
+
                 TrashedFilter::make(),
             ])
+            ->filtersLayout(FiltersLayout::AboveContentCollapsible)
             ->recordActions([
                 EditAction::make(),
                 Action::make('replicate')

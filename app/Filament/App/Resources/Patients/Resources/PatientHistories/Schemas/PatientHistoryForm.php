@@ -411,13 +411,26 @@ class PatientHistoryForm
 
                                     ]),
 
-                                Select::make('other_medicine_id')
+                                Radio::make('other_medicine_mode')
                                     ->label('Add Other Medicine')
+                                    ->options([
+                                        'existing' => 'Select Existing',
+                                        'new' => 'Create New',
+                                    ])
+                                    ->default('existing')
+                                    ->live()
+                                    ->inline()
+                                    ->dehydrated(false)
+                                    ->columnSpanFull(),
+
+                                Select::make('other_medicine_id')
+                                    ->label('Medicine')
                                     ->dehydrated(false)
                                     ->searchable()
                                     ->preload()
                                     ->options(Medicine::query()->pluck('Name', 'Id'))
                                     ->live()
+                                    ->visible(fn (Get $get) => $get('other_medicine_mode') !== 'new')
                                     ->afterStateUpdated(function ($state, Get $get, Set $set) use ($globalTimeOfAdministrations, $globalAnupanas) {
                                         if (! $state) {
                                             return;
@@ -455,6 +468,67 @@ class PatientHistoryForm
                                         $set('other_medicine_id', null);
                                     })
                                     ->columnSpanFull(),
+
+                                TextInput::make('other_new_medicine_name')
+                                    ->label('Medicine Name')
+                                    ->dehydrated(false)
+                                    ->live()
+                                    ->visible(fn (Get $get) => $get('other_medicine_mode') === 'new')
+                                    ->columnSpanFull(),
+
+                                Select::make('other_new_medicine_form_id')
+                                    ->label('Medicine Form')
+                                    ->options(fn () => MedicineForm::query()->pluck('Name', 'Id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->dehydrated(false)
+                                    ->visible(fn (Get $get) => $get('other_medicine_mode') === 'new'),
+
+                                TextInput::make('other_new_medicine_company')
+                                    ->label('Company Name')
+                                    ->dehydrated(false)
+                                    ->visible(fn (Get $get) => $get('other_medicine_mode') === 'new'),
+
+                                \Filament\Schemas\Components\Actions::make([
+                                    \Filament\Actions\Action::make('add_new_other_medicine')
+                                        ->label('Add Medicine')
+                                        ->icon('heroicon-o-plus')
+                                        ->color('success')
+                                        ->button()
+                                        ->visible(fn (Get $get) => $get('other_medicine_mode') === 'new')
+                                        ->action(function (Get $get, Set $set) {
+                                            $name = $get('other_new_medicine_name');
+
+                                            if (! $name) {
+                                                return;
+                                            }
+
+                                            $medicine = Medicine::create([
+                                                'Name' => $name,
+                                                'MedicineFormId' => $get('other_new_medicine_form_id'),
+                                                'CompanyName' => $get('other_new_medicine_company') ?? null,
+                                                'IsSpecial' => true,
+                                                'IsPattern' => false,
+                                            ]);
+
+                                            $prescriptions = $get('Prescriptions') ?? [];
+                                            $prescriptions[Str::uuid()->toString()] = [
+                                                'MedicineId' => $medicine->Id,
+                                                'MedicineFormName' => $medicine->medicineForm?->Name ?? '',
+                                                'Anupana' => '',
+                                                'Dose' => '',
+                                                'TimeOfAdministration' => '',
+                                                'Duration' => '',
+                                                'Amount' => 0,
+                                            ];
+
+                                            $set('Prescriptions', $prescriptions);
+                                            $set('other_new_medicine_name', null);
+                                            $set('other_new_medicine_form_id', null);
+                                            $set('other_new_medicine_company', null);
+                                            $set('other_medicine_mode', 'existing');
+                                        }),
+                                ])->columnSpanFull(),
 
                                 Repeater::make('Prescriptions')
                                     ->relationship('prescriptions')

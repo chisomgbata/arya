@@ -743,21 +743,22 @@ class PatientHistoryForm
                             HetuPariksaForm::configure($schema),
                         ]),
 
-                    Tabs\Tab::make('Patient Files')
-                        ->badge(fn (?PatientHistory $record) => $record?->patientFiles()->exists() ? '●' : null)
+                    Tabs\Tab::make('Patient Reports')
+                        ->badge(fn (?PatientHistory $record) => $record?->patientRecords()->exists() ? '●' : null)
                         ->badgeColor('danger')
                         ->schema([
-                            Repeater::make('patientFiles')
-                                ->relationship('patientFiles')
-                                ->label('Patient Files')
+                            Repeater::make('patientRecords')
+                                ->relationship('patientRecords')
+                                ->label('Patient Reports')
                                 ->schema([
-                                    FileUpload::make('File')
-                                        ->preserveFilenames(true)
-                                        ->disk('local')
-                                        ->directory('patient-files/'.Filament::getTenant()?->Id)
-                                        ->visibility('private')
-                                        ->required()
-                                        ->columnSpanFull(),
+                                    TakePicture::make('capture')
+                                        ->label('Capture')
+                                        ->disk('public')
+                                        ->visibility('public')
+                                        ->showCameraSelector()
+                                        ->aspect('16:9')
+                                        ->imageQuality(80)
+                                        ->shouldDeleteOnEdit(false),
                                 ])
                                 ->columns(1)
                                 ->columnSpanFull()
@@ -806,22 +807,21 @@ class PatientHistoryForm
                                 ->defaultItems(0),
                         ]),
 
-                    Tabs\Tab::make('Patient Records')
-                        ->badge(fn (?PatientHistory $record) => $record?->patientRecords()->exists() ? '●' : null)
+                    Tabs\Tab::make('Patient Files')
+                        ->badge(fn (?PatientHistory $record) => $record?->patientFiles()->exists() ? '●' : null)
                         ->badgeColor('danger')
                         ->schema([
-                            Repeater::make('patientRecords')
-                                ->relationship('patientRecords')
-                                ->label('Patient Records')
+                            Repeater::make('patientFiles')
+                                ->relationship('patientFiles')
+                                ->label('Patient Files')
                                 ->schema([
-                                    TakePicture::make('capture')
-                                        ->label('Capture')
-                                        ->disk('public')
-                                        ->visibility('public')
-                                        ->showCameraSelector()
-                                        ->aspect('16:9')
-                                        ->imageQuality(80)
-                                        ->shouldDeleteOnEdit(false),
+                                    FileUpload::make('File')
+                                        ->preserveFilenames(true)
+                                        ->disk('local')
+                                        ->directory('patient-files/'.Filament::getTenant()?->Id)
+                                        ->visibility('private')
+                                        ->required()
+                                        ->columnSpanFull(),
                                 ])
                                 ->columns(1)
                                 ->columnSpanFull()

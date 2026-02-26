@@ -73,6 +73,7 @@ class PatientHistoriesTable
             ->recordActions([
                 EditAction::make(),
                 Action::make('replicate')
+                    ->label('Repeat')
                     ->icon('heroicon-o-document-duplicate') // Filament v3 syntax
                     ->requiresConfirmation()
                     ->action(function (PatientHistory $record) {

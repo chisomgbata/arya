@@ -119,6 +119,7 @@ class MedicineResource extends Resource
                 ->required(),
 
             TextInput::make('Duration')
+                ->label('Quantity')
                 ->required(),
 
             Select::make('AnupanaId')
@@ -159,7 +160,8 @@ class MedicineResource extends Resource
                 TextColumn::make('Dose'),
                 TextColumn::make('timeOfAdministration.Name')
                     ->label('Time Of Administration'),
-                TextColumn::make('Duration'),
+                TextColumn::make('Duration')
+                    ->label('Quantity'),
                 TextColumn::make('anupana.Name')
                     ->label('Anupana'),
                 TextColumn::make('medicine.CompanyName')

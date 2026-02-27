@@ -5,10 +5,7 @@ namespace App\Filament\App\Resources\Patients;
 use App\Filament\App\Resources\Patients\Pages\CreatePatient;
 use App\Filament\App\Resources\Patients\Pages\EditPatient;
 use App\Filament\App\Resources\Patients\Pages\ListPatients;
-use App\Filament\App\Resources\Patients\RelationManagers\CapturesRelationManager;
 use App\Filament\App\Resources\Patients\RelationManagers\HistoryRelationManager;
-use App\Filament\App\Resources\Patients\RelationManagers\PatientFilesRelationManager;
-use App\Filament\App\Resources\Patients\RelationManagers\SketchesRelationManager;
 use App\Filament\App\Resources\Patients\Schemas\PatientForm;
 use App\Filament\App\Resources\Patients\Tables\PatientsTable;
 use App\Models\Patient;
@@ -43,9 +40,6 @@ class PatientResource extends Resource
     {
         return [
             HistoryRelationManager::class,
-            PatientFilesRelationManager::class,
-            SketchesRelationManager::class,
-            CapturesRelationManager::class
         ];
     }
 

@@ -3,6 +3,8 @@
 namespace App\Filament\App\Resources\Patients\Resources\PatientHistories\Tables;
 
 use App\Filament\App\Resources\Patients\Resources\PatientHistories\PatientHistoryResource;
+use App\Models\Disease;
+use App\Models\Medicine;
 use App\Models\PatientHistory;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -10,9 +12,13 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
-use Filament\Support\Enums\FontWeight;
+use Filament\Forms\Components\DatePicker;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,56 +29,80 @@ class PatientHistoriesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with([
+                'patient',
+                'diseases',
+                'symptoms',
+                'prescriptions.medicine',
+            ]))
+            ->defaultSort('CreatedDate', 'desc')
             ->columns([
-                // Stack 1: Clinical Details (Diseases + Symptoms)
-                TextColumn::make('diseases.Name')
-                    ->label('Clinical Details')
-                    ->badge()
-                    ->limitList(2)
-                    ->separator(',')
-                    ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query
-                            ->whereHas('diseases', fn (Builder $q) => $q->where('Name', 'like', "%{$search}%"))
-                            ->orWhereHas('symptoms', fn (Builder $q) => $q->where('Name', 'like', "%{$search}%"));
-                    })
-                    ->description(fn (PatientHistory $record) => 'Symptoms: '.$record->symptoms->pluck('Name')->take(3)->implode(', ')
-                    )
-                    ->wrap(),
-
-                // Stack 2: Prescriptions
-                TextColumn::make('prescriptions_count')
-                    ->counts('prescriptions')
-                    ->label('Meds')
-                    ->badge()
-                    ->color('gray')
-                    ->alignCenter(),
-
-                // Stack 3: Financials (Consultation + Medicine Fees)
-                TextColumn::make('ConsultationFee')
-                    ->label('Fees')
-                    ->numeric()
-                    ->weight(FontWeight::Bold)
-                    ->prefix('Consult: ')
-                    ->description(fn (PatientHistory $record) => 'Meds: '.number_format($record->MedicinesFee)
-                    )
+                TextColumn::make('CreatedDate')
+                    ->label('Visit')
+                    ->dateTime('M d, Y h:i A')
                     ->sortable(),
 
-                // Stack 4: Timeline (Created + Next Date)
-                TextColumn::make('CreatedDate')
-                    ->label('Timeline')
-                    ->dateTime('M d, Y h:i A')
-                    ->sortable()
-                    ->description(fn (PatientHistory $record) => $record->NextAppointmentDate
-                        ? 'Next: '.$record->NextAppointmentDate->format('M d, Y')
-                        : 'No follow-up'
-                    ),
+                TextColumn::make('diseases.Name')
+                    ->label('')
+                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas(
+                        'diseases',
+                        fn (Builder $q) => $q->where('Diseases.Name', 'like', "%{$search}%")
+                    ))
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                ViewColumn::make('details')
+                    ->label('Details')
+                    ->view('filament.app.tables.patient-history-details'),
             ])
             ->filters([
+                SelectFilter::make('disease')
+                    ->label('Disease')
+                    ->options(fn () => Disease::query()->orderBy('Name')->pluck('Name', 'Id'))
+                    ->searchable()
+                    ->query(fn (Builder $query, array $data) => $query->when(
+                        $data['value'],
+                        fn (Builder $q, $id) => $q->whereHas('diseases', fn (Builder $d) => $d->where('Diseases.Id', $id))
+                    )),
+
+                SelectFilter::make('medicine')
+                    ->label('Medicine')
+                    ->options(fn () => Medicine::query()->orderBy('Name')->pluck('Name', 'Id'))
+                    ->searchable()
+                    ->query(fn (Builder $query, array $data) => $query->when(
+                        $data['value'],
+                        fn (Builder $q, $id) => $q->whereHas('prescriptions', fn (Builder $p) => $p->where('MedicineId', $id))
+                    )),
+
+                Filter::make('date_range')
+                    ->label('Date Range')
+                    ->form([
+                        DatePicker::make('from')->label('From')->native(false),
+                        DatePicker::make('until')->label('Until')->native(false),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        return $query
+                            ->when($data['from'], fn (Builder $q, $date) => $q->whereDate('CreatedDate', '>=', $date))
+                            ->when($data['until'], fn (Builder $q, $date) => $q->whereDate('CreatedDate', '<=', $date));
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['from'] ?? null) {
+                            $indicators[] = 'From: '.\Carbon\Carbon::parse($data['from'])->toFormattedDateString();
+                        }
+                        if ($data['until'] ?? null) {
+                            $indicators[] = 'Until: '.\Carbon\Carbon::parse($data['until'])->toFormattedDateString();
+                        }
+
+                        return $indicators;
+                    }),
+
                 TrashedFilter::make(),
             ])
+            ->filtersLayout(FiltersLayout::AboveContentCollapsible)
             ->recordActions([
                 EditAction::make(),
                 Action::make('replicate')
+                    ->label('Repeat')
                     ->icon('heroicon-o-document-duplicate') // Filament v3 syntax
                     ->requiresConfirmation()
                     ->action(function (PatientHistory $record) {

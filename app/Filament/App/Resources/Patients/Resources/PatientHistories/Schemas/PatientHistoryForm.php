@@ -160,105 +160,113 @@ class PatientHistoryForm
                                                 ->color('primary')
                                                 ->modal()
                                                 ->schema(fn (Get $get) => [
+                                                    Actions::make([
+                                                        Action::make('add_medicine')
+                                                            ->label('Add Medicine')
+                                                            ->icon('heroicon-o-plus')
+                                                            ->color('success')
+                                                            ->button()
+                                                            ->modal()
+                                                            ->modalHeading(fn () => 'Add Medicine For '.$get('disease').' : '.$get('type_name'))
+                                                            ->schema([
+                                                                Hidden::make('DiseaseTypeId')->default(fn () => $get('type_id')),
+                                                                Hidden::make('IsSpecial')->default(true),
+                                                                Radio::make('medicine_mode')
+                                                                    ->label('Medicine')
+                                                                    ->options([
+                                                                        'existing' => 'Select Existing',
+                                                                        'new' => 'Create New',
+                                                                    ])
+                                                                    ->default('existing')
+                                                                    ->live()
+                                                                    ->inline()
+                                                                    ->columnSpanFull(),
+                                                                Select::make('MedicineId')
+                                                                    ->label('Existing Medicine')
+                                                                    ->searchable()
+                                                                    ->options(fn () => Medicine::query()->pluck('Name', 'Id'))
+                                                                    ->visible(fn (Get $get) => $get('medicine_mode') !== 'new')
+                                                                    ->required(fn (Get $get) => $get('medicine_mode') !== 'new'),
+                                                                TextInput::make('new_medicine_name')
+                                                                    ->label('Medicine Name')
+                                                                    ->visible(fn (Get $get) => $get('medicine_mode') === 'new')
+                                                                    ->required(fn (Get $get) => $get('medicine_mode') === 'new'),
+                                                                Select::make('new_medicine_form_id')
+                                                                    ->label('Medicine Form')
+                                                                    ->options(fn () => MedicineForm::query()->pluck('Name', 'Id'))
+                                                                    ->searchable()
+                                                                    ->visible(fn (Get $get) => $get('medicine_mode') === 'new')
+                                                                    ->required(fn (Get $get) => $get('medicine_mode') === 'new'),
+                                                                TextInput::make('new_medicine_company')
+                                                                    ->label('Company Name')
+                                                                    ->visible(fn (Get $get) => $get('medicine_mode') === 'new'),
+                                                                TextInput::make('Dose')->required(),
+
+                                                                Select::make('TimeOfAdministrationId')
+                                                                    ->label('Time of Administration')
+                                                                    ->searchable()
+                                                                    ->options($globalTimeOfAdministrations),
+
+                                                                Select::make('AnupanaId')
+                                                                    ->label('Anupana')
+                                                                    ->searchable()
+                                                                    ->options($globalAnupanas),
+
+                                                                TextInput::make('Duration')
+                                                                    ->label('Quantity')
+                                                                    ->required(),
+                                                            ])->action(function ($data, Set $set, Get $get) use ($globalTimeOfAdministrations, $globalAnupanas) {
+                                                                $medicineId = $data['MedicineId'] ?? null;
+                                                                $medicineName = null;
+                                                                $medicineFormName = null;
+
+                                                                if (($data['medicine_mode'] ?? 'existing') === 'new') {
+                                                                    $medicine = Medicine::create([
+                                                                        'Name' => $data['new_medicine_name'],
+                                                                        'MedicineFormId' => $data['new_medicine_form_id'],
+                                                                        'CompanyName' => $data['new_medicine_company'] ?? null,
+                                                                        'IsSpecial' => true,
+                                                                        'IsPattern' => false,
+                                                                    ]);
+                                                                    $medicineId = $medicine->Id;
+                                                                    $medicineName = $medicine->Name;
+                                                                    $medicineFormName = $medicine->medicineForm?->Name;
+                                                                } else {
+                                                                    $medicine = Medicine::with('medicineForm')->find($medicineId);
+                                                                    $medicineName = $medicine?->Name;
+                                                                    $medicineFormName = $medicine?->medicineForm?->Name;
+                                                                }
+
+                                                                DiseaseTypeMedicine::create([
+                                                                    'DiseaseTypeId' => $data['DiseaseTypeId'],
+                                                                    'MedicineId' => $medicineId,
+                                                                    'IsSpecial' => $data['IsSpecial'],
+                                                                    'Dose' => $data['Dose'],
+                                                                    'TimeOfAdministrationId' => $data['TimeOfAdministrationId'],
+                                                                    'AnupanaId' => $data['AnupanaId'],
+                                                                    'Duration' => $data['Duration'],
+                                                                ]);
+
+                                                                $current = $get('Medicines') ?? [];
+                                                                $current[] = [
+                                                                    'MedicineId' => $medicineId,
+                                                                    'MedicineName' => $medicineName,
+                                                                    'MedicineFormName' => $medicineFormName,
+                                                                    'Dose' => $data['Dose'],
+                                                                    'TimeOfAdministration' => $data['TimeOfAdministrationId'] ? ($globalTimeOfAdministrations[$data['TimeOfAdministrationId']] ?? '') : '',
+                                                                    'Anupana' => $data['AnupanaId'] ? ($globalAnupanas[$data['AnupanaId']] ?? '') : '',
+                                                                    'Duration' => $data['Duration'],
+                                                                    'Selected' => false,
+                                                                ];
+                                                                $set('Medicines', $current);
+                                                            }),
+                                                    ])->alignEnd(),
+
                                                     Repeater::make('Medicines')
                                                         ->deletable(false)
                                                         ->addable(false)
                                                         ->cloneable(false)
                                                         ->reorderable(false)
-                                                        ->hintActions([
-                                                            Action::make('add_medicine')
-                                                                ->modalHeading(fn () => 'Add Medicine For '.$get('disease').' : '.$get('type_name'))
-                                                                ->schema([
-                                                                    Hidden::make('DiseaseTypeId')->default(fn () => $get('type_id')),
-                                                                    Hidden::make('IsSpecial')->default(true),
-                                                                    Radio::make('medicine_mode')
-                                                                        ->label('Medicine')
-                                                                        ->options([
-                                                                            'existing' => 'Select Existing',
-                                                                            'new' => 'Create New',
-                                                                        ])
-                                                                        ->default('existing')
-                                                                        ->live()
-                                                                        ->inline()
-                                                                        ->columnSpanFull(),
-                                                                    Select::make('MedicineId')
-                                                                        ->label('Existing Medicine')
-                                                                        ->searchable()
-                                                                        ->options(fn () => Medicine::query()->pluck('Name', 'Id'))
-                                                                        ->visible(fn (Get $get) => $get('medicine_mode') !== 'new')
-                                                                        ->required(fn (Get $get) => $get('medicine_mode') !== 'new'),
-                                                                    TextInput::make('new_medicine_name')
-                                                                        ->label('Medicine Name')
-                                                                        ->visible(fn (Get $get) => $get('medicine_mode') === 'new')
-                                                                        ->required(fn (Get $get) => $get('medicine_mode') === 'new'),
-                                                                    Select::make('new_medicine_form_id')
-                                                                        ->label('Medicine Form')
-                                                                        ->options(fn () => MedicineForm::query()->pluck('Name', 'Id'))
-                                                                        ->searchable()
-                                                                        ->visible(fn (Get $get) => $get('medicine_mode') === 'new')
-                                                                        ->required(fn (Get $get) => $get('medicine_mode') === 'new'),
-                                                                    TextInput::make('new_medicine_company')
-                                                                        ->label('Company Name')
-                                                                        ->visible(fn (Get $get) => $get('medicine_mode') === 'new'),
-                                                                    TextInput::make('Dose')->required(),
-
-                                                                    Select::make('TimeOfAdministrationId')
-                                                                        ->label('Time of Administration')
-                                                                        ->searchable()
-                                                                        ->options($globalTimeOfAdministrations),
-
-                                                                    Select::make('AnupanaId')
-                                                                        ->label('Anupana')
-                                                                        ->searchable()
-                                                                        ->options($globalAnupanas),
-
-                                                                    TextInput::make('Duration')->required(),
-                                                                ])->action(function ($data, Set $set, Get $get) use ($globalTimeOfAdministrations, $globalAnupanas) {
-                                                                    $medicineId = $data['MedicineId'] ?? null;
-                                                                    $medicineName = null;
-                                                                    $medicineFormName = null;
-
-                                                                    if (($data['medicine_mode'] ?? 'existing') === 'new') {
-                                                                        $medicine = Medicine::create([
-                                                                            'Name' => $data['new_medicine_name'],
-                                                                            'MedicineFormId' => $data['new_medicine_form_id'],
-                                                                            'CompanyName' => $data['new_medicine_company'] ?? null,
-                                                                            'IsSpecial' => true,
-                                                                            'IsPattern' => false,
-                                                                        ]);
-                                                                        $medicineId = $medicine->Id;
-                                                                        $medicineName = $medicine->Name;
-                                                                        $medicineFormName = $medicine->medicineForm?->Name;
-                                                                    } else {
-                                                                        $medicine = Medicine::with('medicineForm')->find($medicineId);
-                                                                        $medicineName = $medicine?->Name;
-                                                                        $medicineFormName = $medicine?->medicineForm?->Name;
-                                                                    }
-
-                                                                    DiseaseTypeMedicine::create([
-                                                                        'DiseaseTypeId' => $data['DiseaseTypeId'],
-                                                                        'MedicineId' => $medicineId,
-                                                                        'IsSpecial' => $data['IsSpecial'],
-                                                                        'Dose' => $data['Dose'],
-                                                                        'TimeOfAdministrationId' => $data['TimeOfAdministrationId'],
-                                                                        'AnupanaId' => $data['AnupanaId'],
-                                                                        'Duration' => $data['Duration'],
-                                                                    ]);
-
-                                                                    $current = $get('Medicines') ?? [];
-                                                                    $current[] = [
-                                                                        'MedicineId' => $medicineId,
-                                                                        'MedicineName' => $medicineName,
-                                                                        'MedicineFormName' => $medicineFormName,
-                                                                        'Dose' => $data['Dose'],
-                                                                        'TimeOfAdministration' => $data['TimeOfAdministrationId'] ? ($globalTimeOfAdministrations[$data['TimeOfAdministrationId']] ?? '') : '',
-                                                                        'Anupana' => $data['AnupanaId'] ? ($globalAnupanas[$data['AnupanaId']] ?? '') : '',
-                                                                        'Duration' => $data['Duration'],
-                                                                        'Selected' => false,
-                                                                    ];
-                                                                    $set('Medicines', $current);
-                                                                })->button(),
-                                                        ])
                                                         ->table([
                                                             Repeater\TableColumn::make('Select'),
                                                             Repeater\TableColumn::make('MedicineName'),
@@ -266,7 +274,7 @@ class PatientHistoryForm
                                                             Repeater\TableColumn::make('Dose'),
                                                             Repeater\TableColumn::make('TimeOfAdministration'),
                                                             Repeater\TableColumn::make('Anupana'),
-                                                            Repeater\TableColumn::make('Duration'),
+                                                            Repeater\TableColumn::make('Quantity'),
                                                         ])
                                                         ->schema(function () use ($globalAnupanas, $globalTimeOfAdministrations, $globalMedicineForms) {
                                                             return [
@@ -333,7 +341,8 @@ class PatientHistoryForm
                                                                 TextInput::make('Anupana')
                                                                     ->datalist($globalAnupanas),
 
-                                                                TextInput::make('Duration'),
+                                                                TextInput::make('Duration')
+                                                                    ->label('Quantity'),
                                                             ];
                                                         })
                                                         ->default(function () use ($get) {
@@ -361,6 +370,7 @@ class PatientHistoryForm
                                                                 ->toArray();
                                                         }),
                                                 ])->modalWidth(Width::SevenExtraLarge)
+                                                ->stickyModalFooter()
                                                 ->action(function ($data) use ($get, $set) {
                                                     $fields = collect($data['Medicines'])->where('Selected', true)->toArray();
                                                     $value = array_map(fn ($field) => [
@@ -401,13 +411,26 @@ class PatientHistoryForm
 
                                     ]),
 
-                                Select::make('other_medicine_id')
+                                Radio::make('other_medicine_mode')
                                     ->label('Add Other Medicine')
+                                    ->options([
+                                        'existing' => 'Select Existing',
+                                        'new' => 'Create New',
+                                    ])
+                                    ->default('existing')
+                                    ->live()
+                                    ->inline()
+                                    ->dehydrated(false)
+                                    ->columnSpanFull(),
+
+                                Select::make('other_medicine_id')
+                                    ->label('Medicine')
                                     ->dehydrated(false)
                                     ->searchable()
                                     ->preload()
                                     ->options(Medicine::query()->pluck('Name', 'Id'))
                                     ->live()
+                                    ->visible(fn (Get $get) => $get('other_medicine_mode') !== 'new')
                                     ->afterStateUpdated(function ($state, Get $get, Set $set) use ($globalTimeOfAdministrations, $globalAnupanas) {
                                         if (! $state) {
                                             return;
@@ -446,6 +469,67 @@ class PatientHistoryForm
                                     })
                                     ->columnSpanFull(),
 
+                                TextInput::make('other_new_medicine_name')
+                                    ->label('Medicine Name')
+                                    ->dehydrated(false)
+                                    ->live()
+                                    ->visible(fn (Get $get) => $get('other_medicine_mode') === 'new')
+                                    ->columnSpanFull(),
+
+                                Select::make('other_new_medicine_form_id')
+                                    ->label('Medicine Form')
+                                    ->options(fn () => MedicineForm::query()->pluck('Name', 'Id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->dehydrated(false)
+                                    ->visible(fn (Get $get) => $get('other_medicine_mode') === 'new'),
+
+                                TextInput::make('other_new_medicine_company')
+                                    ->label('Company Name')
+                                    ->dehydrated(false)
+                                    ->visible(fn (Get $get) => $get('other_medicine_mode') === 'new'),
+
+                                \Filament\Schemas\Components\Actions::make([
+                                    \Filament\Actions\Action::make('add_new_other_medicine')
+                                        ->label('Add Medicine')
+                                        ->icon('heroicon-o-plus')
+                                        ->color('success')
+                                        ->button()
+                                        ->visible(fn (Get $get) => $get('other_medicine_mode') === 'new')
+                                        ->action(function (Get $get, Set $set) {
+                                            $name = $get('other_new_medicine_name');
+
+                                            if (! $name) {
+                                                return;
+                                            }
+
+                                            $medicine = Medicine::create([
+                                                'Name' => $name,
+                                                'MedicineFormId' => $get('other_new_medicine_form_id'),
+                                                'CompanyName' => $get('other_new_medicine_company') ?? null,
+                                                'IsSpecial' => true,
+                                                'IsPattern' => false,
+                                            ]);
+
+                                            $prescriptions = $get('Prescriptions') ?? [];
+                                            $prescriptions[Str::uuid()->toString()] = [
+                                                'MedicineId' => $medicine->Id,
+                                                'MedicineFormName' => $medicine->medicineForm?->Name ?? '',
+                                                'Anupana' => '',
+                                                'Dose' => '',
+                                                'TimeOfAdministration' => '',
+                                                'Duration' => '',
+                                                'Amount' => 0,
+                                            ];
+
+                                            $set('Prescriptions', $prescriptions);
+                                            $set('other_new_medicine_name', null);
+                                            $set('other_new_medicine_form_id', null);
+                                            $set('other_new_medicine_company', null);
+                                            $set('other_medicine_mode', 'existing');
+                                        }),
+                                ])->columnSpanFull(),
+
                                 Repeater::make('Prescriptions')
                                     ->relationship('prescriptions')
                                     ->table([
@@ -455,7 +539,7 @@ class PatientHistoryForm
                                         Repeater\TableColumn::make('Dose'),
                                         Repeater\TableColumn::make('TimeOfAdministration'),
                                         Repeater\TableColumn::make('Anupana'),
-                                        Repeater\TableColumn::make('Duration'),
+                                        Repeater\TableColumn::make('Quantity'),
                                         Repeater\TableColumn::make('Amount'),
                                     ])
                                     ->schema([
@@ -472,7 +556,8 @@ class PatientHistoryForm
 
                                         TextInput::make('Anupana')
                                             ->datalist($globalAnupanas),
-                                        TextInput::make('Duration'),
+                                        TextInput::make('Duration')
+                                            ->label('Quantity'),
 
                                         TextInput::make('Amount')
                                             ->extraAttributes(['class' => 'medicine-amount'])
@@ -743,21 +828,22 @@ class PatientHistoryForm
                             HetuPariksaForm::configure($schema),
                         ]),
 
-                    Tabs\Tab::make('Patient Files')
-                        ->badge(fn (?PatientHistory $record) => $record?->patientFiles()->exists() ? '●' : null)
+                    Tabs\Tab::make('Patient Reports')
+                        ->badge(fn (?PatientHistory $record) => $record?->patientRecords()->exists() ? '●' : null)
                         ->badgeColor('danger')
                         ->schema([
-                            Repeater::make('patientFiles')
-                                ->relationship('patientFiles')
-                                ->label('Patient Files')
+                            Repeater::make('patientRecords')
+                                ->relationship('patientRecords')
+                                ->label('Patient Reports')
                                 ->schema([
-                                    FileUpload::make('File')
-                                        ->preserveFilenames(true)
-                                        ->disk('local')
-                                        ->directory('patient-files/'.Filament::getTenant()?->Id)
-                                        ->visibility('private')
-                                        ->required()
-                                        ->columnSpanFull(),
+                                    TakePicture::make('capture')
+                                        ->label('Capture')
+                                        ->disk('public')
+                                        ->visibility('public')
+                                        ->showCameraSelector()
+                                        ->aspect('16:9')
+                                        ->imageQuality(80)
+                                        ->shouldDeleteOnEdit(false),
                                 ])
                                 ->columns(1)
                                 ->columnSpanFull()
@@ -806,22 +892,21 @@ class PatientHistoryForm
                                 ->defaultItems(0),
                         ]),
 
-                    Tabs\Tab::make('Patient Records')
-                        ->badge(fn (?PatientHistory $record) => $record?->patientRecords()->exists() ? '●' : null)
+                    Tabs\Tab::make('Patient Files')
+                        ->badge(fn (?PatientHistory $record) => $record?->patientFiles()->exists() ? '●' : null)
                         ->badgeColor('danger')
                         ->schema([
-                            Repeater::make('patientRecords')
-                                ->relationship('patientRecords')
-                                ->label('Patient Records')
+                            Repeater::make('patientFiles')
+                                ->relationship('patientFiles')
+                                ->label('Patient Files')
                                 ->schema([
-                                    TakePicture::make('capture')
-                                        ->label('Capture')
-                                        ->disk('public')
-                                        ->visibility('public')
-                                        ->showCameraSelector()
-                                        ->aspect('16:9')
-                                        ->imageQuality(80)
-                                        ->shouldDeleteOnEdit(false),
+                                    FileUpload::make('File')
+                                        ->preserveFilenames(true)
+                                        ->disk('local')
+                                        ->directory('patient-files/'.Filament::getTenant()?->Id)
+                                        ->visibility('private')
+                                        ->required()
+                                        ->columnSpanFull(),
                                 ])
                                 ->columns(1)
                                 ->columnSpanFull()

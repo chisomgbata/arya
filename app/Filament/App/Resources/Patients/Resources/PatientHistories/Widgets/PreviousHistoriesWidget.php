@@ -74,6 +74,7 @@ class PreviousHistoriesWidget extends TableWidget
                     ])),
 
                 Action::make('replicate')
+                    ->label('Repeat')
                     ->icon('heroicon-o-document-duplicate')
                     ->requiresConfirmation()
                     ->action(function (PatientHistory $record) {

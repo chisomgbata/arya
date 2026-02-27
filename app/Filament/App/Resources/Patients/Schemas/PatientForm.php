@@ -7,6 +7,7 @@ use emmanpbarrameda\FilamentTakePictureField\Forms\Components\TakePicture;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Fieldset;
@@ -32,7 +33,7 @@ class PatientForm
                 TextInput::make('Email')->email(),
                 TextInput::make('OtherIdNumber'),
                 Radio::make('Gender')->options([
-                    'male' => 'Male', 'female' => 'Female', "others" => 'Others'
+                    'male' => 'Male', 'female' => 'Female', 'others' => 'Others',
                 ])->columns(3),
                 TextArea::make('Address')->columnSpanFull(),
                 TakePicture::make('Image')
@@ -46,6 +47,15 @@ class PatientForm
 
                 Textarea::make('complain_of'),
 
+                Select::make('consultation_fees_type')
+                    ->label('Consultation Fees')
+                    ->options([
+                        'Full' => 'Full',
+                        'Half' => 'Half',
+                        'Free' => 'Free',
+                    ])
+                    ->default('Full')
+                    ->required(),
 
                 Section::make('Prakruti Analysis')
                     ->columnSpanFull()
@@ -60,7 +70,7 @@ class PatientForm
                             ->form(static::getPrakrutiCalculationSchema()) // The Radio buttons
                             ->action(function (array $data, Set $set) {
                                 static::calculateAndSetResults($data, $set);
-                            })
+                            }),
                     ])
                     ->schema([
                         Grid::make(7)
@@ -95,7 +105,7 @@ class PatientForm
                                 $items->mapWithKeys(function ($item) {
                                     return [$item->Symptoms => "({$item->mainPrakruti->Name}) $item->Symptoms"];
                                 })->toArray()
-                            )
+                            ),
                     ])
                     ->columnSpan(1);
             })
@@ -108,7 +118,7 @@ class PatientForm
                 'default' => 1,
                 'md' => 2,
             ])
-                ->schema($fieldsets)
+                ->schema($fieldsets),
         ];
     }
 
@@ -120,7 +130,9 @@ class PatientForm
         // 1. Get selected symptoms from modal data
         $selectedSymptoms = array_filter(array_values($data));
 
-        if (empty($selectedSymptoms)) return;
+        if (empty($selectedSymptoms)) {
+            return;
+        }
 
         // 2. Query Doshas
         $prakrutiMap = MainPrakrutiBodyPartOrFood::query()
@@ -132,9 +144,13 @@ class PatientForm
 
         foreach ($prakrutiMap as $item) {
             $name = $item->mainPrakruti->Name ?? '';
-            if (stripos($name, 'VAT') !== false) $counts['Vata']++;
-            elseif (stripos($name, 'PIT') !== false) $counts['Pitta']++;
-            elseif (stripos($name, 'KAF') !== false || stripos($name, 'Kapha') !== false) $counts['Kapha']++;
+            if (stripos($name, 'VAT') !== false) {
+                $counts['Vata']++;
+            } elseif (stripos($name, 'PIT') !== false) {
+                $counts['Pitta']++;
+            } elseif (stripos($name, 'KAF') !== false || stripos($name, 'Kapha') !== false) {
+                $counts['Kapha']++;
+            }
         }
 
         $total = array_sum($counts);
@@ -148,9 +164,9 @@ class PatientForm
         $set('prakruti.Total', $total);
 
         if ($total > 0) {
-            $set('prakruti.VatPercentage', (int)round(($counts['Vata'] / $total) * 100));
-            $set('prakruti.PitPercentage', (int)round(($counts['Pitta'] / $total) * 100));
-            $set('prakruti.KufPercentage', (int)round(($counts['Kapha'] / $total) * 100));
+            $set('prakruti.VatPercentage', (int) round(($counts['Vata'] / $total) * 100));
+            $set('prakruti.PitPercentage', (int) round(($counts['Pitta'] / $total) * 100));
+            $set('prakruti.KufPercentage', (int) round(($counts['Kapha'] / $total) * 100));
         }
     }
 }
